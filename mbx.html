@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <title>Anomalias STCMETRO — MBX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bd:#0a1628;--bm:#1a56c4;--cy:#00aaff;--pm:#7c3fc0;
+      --wh:#f0f4ff;--gr:#8a9bbf;--er:#ff4d6d;--su:#00e5a0;--wa:#ffb300;
+      --mux:#b57bee;--nav-h:64px;--top-h:56px;
+    }
+    html,body{height:100%;font-family:'Barlow',sans-serif;background:var(--bd);color:var(--wh);-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+
+    /* topbar */
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--top-h);background:rgba(10,22,40,.97);border-bottom:1px solid rgba(0,170,255,.15);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+    .tlogo{display:flex;align-items:center;gap:8px}
+    .ticon{width:32px;height:32px;background:linear-gradient(135deg,var(--bm),var(--pm));border-radius:8px;display:flex;align-items:center;justify-content:center}
+    .ticon svg{width:16px;height:16px}
+    .tname{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;background:linear-gradient(90deg,#fff,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .tright{display:flex;align-items:center;gap:8px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--bm),var(--pm));display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700}
+    .btn-sair{background:none;border:1px solid rgba(255,77,109,.3);border-radius:7px;padding:6px 8px;color:var(--er);cursor:pointer;font-size:11px;font-weight:600}
+
+    /* content */
+    .content{margin-top:var(--top-h);margin-bottom:var(--nav-h);padding:20px 16px}
+    .page-header{margin-bottom:24px}
+    .page-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;background:linear-gradient(90deg,#fff,var(--mux));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:10px}
+    .page-title svg{width:22px;height:22px;flex-shrink:0;stroke:var(--mux)}
+    .page-sub{font-size:13px;color:var(--gr);margin-top:4px}
+
+    /* sumário */
+    .sumrow{display:flex;gap:10px;margin-bottom:24px}
+    .sumcard{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+    .sumval{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--mux)}
+    .sumcard.cli .sumval{color:var(--cy)}
+    .sumcard.trc .sumval{color:var(--wa)}
+    .sumlbl{font-size:10px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;text-align:center}
+
+    /* filtros */
+    .filtros{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+    .filtros::-webkit-scrollbar{display:none}
+    .fbtn{padding:7px 14px;border-radius:20px;white-space:nowrap;font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--gr);transition:all .2s}
+    .fbtn.active{background:rgba(181,123,238,.12);border-color:rgba(181,123,238,.4);color:var(--mux)}
+
+    /* section */
+    .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .sec-ttl{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.8px;color:var(--gr);text-transform:uppercase}
+    .cpill{background:rgba(181,123,238,.1);border:1px solid rgba(181,123,238,.25);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--mux)}
+
+    /* card MBX */
+    .mbx-card{background:rgba(255,255,255,.04);border:1px solid rgba(181,123,238,.2);border-left:3px solid var(--mux);border-radius:14px;padding:18px 16px;margin-bottom:12px;transition:all .3s;overflow:hidden}
+    .mbx-card.saindo{opacity:0;transform:translateX(60px) scale(.95);max-height:0;padding:0;margin:0;border:none}
+    .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px}
+    .card-nome{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#fff,var(--mux));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
+    .card-fiscal{font-size:12px;color:var(--gr);margin-top:3px}
+    .mux-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;background:rgba(181,123,238,.15);border:1px solid rgba(181,123,238,.3);color:var(--mux);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;flex-shrink:0}
+
+    /* stats grid */
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .stat-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 8px;text-align:center}
+    .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700}
+    .stat-val.cli{color:var(--cy)}
+    .stat-val.kva{color:var(--wa)}
+    .stat-val.trc{color:var(--mux)}
+    .stat-lbl{font-size:10px;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+    /* info extra */
+    .card-info{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+    .info-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,.05);font-size:12px;color:var(--gr)}
+    .info-tag svg{width:12px;height:12px;flex-shrink:0}
+    .info-tag span{color:var(--wh)}
+
+    /* botoes acao */
+    .card-actions{display:flex;gap:10px}
+    .btn-acao{flex:1;padding:11px 8px;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .2s,transform .15s}
+    .btn-acao:active{transform:scale(.97)}
+    .btn-acao:hover{opacity:.85}
+    .btn-mapeado{background:linear-gradient(135deg,#1a56c4,#0d3a8c);color:#fff}
+    .btn-tatico{background:linear-gradient(135deg,var(--pm),#5a2a9c);color:#fff}
+
+    /* empty */
+    .empty{text-align:center;padding:60px 20px;color:var(--gr)}
+    .empty-icon{font-size:52px;margin-bottom:14px}
+    .empty p{font-size:14px;line-height:1.6}
+    .empty strong{color:var(--su)}
+
+    /* skeleton */
+    .sk{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:200% 100%;animation:sh 1.5s infinite;border-radius:14px}
+    @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* toast obrigado */
+    .toast-obg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);z-index:4000;background:rgba(13,31,60,.98);border:1px solid rgba(181,123,238,.4);border-radius:20px;padding:32px 48px;text-align:center;opacity:0;pointer-events:none;transition:all .3s}
+    .toast-obg.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    .toast-obg-icon{font-size:40px;margin-bottom:10px}
+    .toast-obg-txt{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--su);letter-spacing:1px}
+    .toast-obg-sub{font-size:13px;color:var(--gr);margin-top:6px}
+
+    /* nav */
+    .botnav{position:fixed;bottom:0;left:0;right:0;z-index:1000;height:var(--nav-h);background:rgba(10,22,40,.97);border-top:1px solid rgba(0,170,255,.15);backdrop-filter:blur(16px);display:flex;align-items:center}
+    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;min-height:44px;cursor:pointer;border:none;background:none;color:var(--gr);transition:color .2s;position:relative}
+    .ni.active{color:var(--mux)}
+    .ni svg{width:22px;height:22px}
+    .nlbl{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+    .ni.active::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--mux);border-radius:0 0 4px 4px}
+    .ni-badge{position:absolute;top:6px;right:calc(50% - 18px);background:#ff4d6d;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+    .ni-badge{position:absolute;top:6px;right:calc(50% - 18px);background:#ff4d6d;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+    /* spinner */
+    .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+  
+    
+
+    
+
+    
+    /* ── Tema Claro v2 — usa variáveis --th-* ────────────────── */
+    
+    
+    
+    
+
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tlogo">
+    <div class="ticon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <span class="tname">STCMETRO</span>
+  </div>
+  <div class="tright">
+    <div class="avatar" id="avatarEl">?</div>
+    <button class="btn-sair" onclick="doLogout()">Sair</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="page-header">
+    <div class="page-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+        <path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+      </svg>
+      MBX — RECONDUTORAMENTO DE BT
+    </div>
+    <div class="page-sub" id="pageSub">Transformadores com trechos solicitados para recondutoramento</div>
+  </div>
+
+  <div class="sumrow">
+    <div class="sumcard"><div class="sumval" id="sTrafos">—</div><div class="sumlbl">Transformadores</div></div>
+    <div class="sumcard cli"><div class="sumval" id="sClientes">—</div><div class="sumlbl">Clientes</div></div>
+    <div class="sumcard trc"><div class="sumval" id="sTrechos">—</div><div class="sumlbl">Trechos</div></div>
+  </div>
+
+  <div class="filtros">
+    <button class="fbtn active" onclick="setFiltro('pendente',this)">Pendentes</button>
+    <button class="fbtn" onclick="setFiltro('mapeado',this)">Ja mapeados</button>
+    <button class="fbtn" onclick="setFiltro('tatico',this)">Enviados ao tatico</button>
+    <button class="fbtn" onclick="setFiltro('todos',this)">Todos</button>
+  </div>
+
+  <div class="sec-hdr">
+    <div class="sec-ttl" id="secTtl">Pendentes de avaliacao</div>
+    <div class="cpill" id="cntPill">—</div>
+  </div>
+
+  <div id="lista">
+    <div class="sk" style="height:200px;margin-bottom:12px"></div>
+    <div class="sk" style="height:200px;margin-bottom:12px"></div>
+    <div class="sk" style="height:200px"></div>
+  </div>
+</div>
+
+<!-- nav -->
+<nav class="botnav">
+  <button class="ni" onclick="location.href='mapa.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+    <span class="nlbl">Mapa</span>
+  </button>
+  <button class="ni" onclick="location.href='anomalias.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="nlbl">Anomalias</span>
+  </button>
+  <button class="ni" onclick="location.href='pendencias.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span class="nlbl">Pendencias</span>
+    <span class="ni-badge" id="badgePendencias" style="display:none"></span>
+  </button>
+  <button class="ni" onclick="location.href='dashboard.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span class="nlbl">Dashboard</span>
+  </button>
+  <button class="ni active" onclick="location.href='mbx.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    <span class="nlbl">MBX</span>
+  </button>
+  <button class="ni" onclick="location.href='circuitos.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="nlbl">Circuitos</span>
+  </button>
+</nav>
+
+<!-- toast obrigado -->
+<div class="toast-obg" id="toastObg">
+  <div class="toast-obg-icon">✅</div>
+  <div class="toast-obg-txt">Obrigado!</div>
+  <div class="toast-obg-sub" id="toastObgSub">Registro atualizado com sucesso.</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://evejimevrfxyzavuquis.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2ZWppbWV2cmZ4eXphdnVxdWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MjA5OTEsImV4cCI6MjEwNDA5Njk5MX0.AlOuF3z9CUCZ_54mt1c8h7UFGWn993onI80mllVGSXo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function fetchAll(table, opts = {}) {
+  const { select='*', filters={}, order=null } = opts;
+  let results=[], offset=0, limit=1000;
+  while (true) {
+    let q = sb.from(table).select(select).range(offset, offset+limit-1);
+    for (const [col,val] of Object.entries(filters)) {
+      if (val===null) q=q.is(col,null);
+      else if (Array.isArray(val)) q=q.in(col,val);
+      else q=q.eq(col,val);
+    }
+    if (order) q=q.order(order.col,{ascending:order.asc??true});
+    const {data,error}=await q;
+    if (error){console.error(`fetchAll(${table}):`,error);break;}
+    results=results.concat(data||[]);
+    if ((data||[]).length<limit) break;
+    offset+=limit;
+  }
+  return results;
+}
+
+let cUser=null, dados=[], filtro='pendente';
+
+(async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { location.href='index.html'; return; }
+  const { data:u } = await sb.from('usuarios').select('*').eq('auth_id',session.user.id).single();
+  if (!u) { await sb.auth.signOut(); location.href='index.html'; return; }
+  if (u.perfil !== 'admin') { location.href='mapa.html'; return; }
+  cUser = { uid: u.id, nome: u.nome };
+  document.getElementById('avatarEl').textContent = (u.nome||'?')[0].toUpperCase();
+  await carregar();
+  // badge pendências
+  const { count } = await sb.from('inspecoes').select('*',{count:'exact',head:true}).eq('status','pendente');
+  const badge = document.getElementById('badgePendencias');
+  if (badge && count > 0) { badge.textContent=count; badge.style.display='flex'; }
+})();
+
+window.doLogout = async () => { await sb.auth.signOut(); sessionStorage.clear(); location.href='index.html'; };
+
+async function carregar() {
+  showSk();
+  try {
+    // busca todas anomalias mux com loop 1000/1000
+    const anomalias = await fetchAll('anomalias', { filters:{ tipo:'mux' }, order:{ col:'criado_em', asc:false } });
+
+    // agrupa por circuito_id
+    const mapa = {};
+    anomalias.forEach(a => {
+      const cid = a.circuito_id || 'desconhecido';
+      if (!mapa[cid]) {
+        mapa[cid] = {
+          circuitoId:   cid,
+          circuitoNome: a.circuito_nome || cid,
+          fiscalNome:   a.fiscal_nome || '—',
+          clientes: 0, potencia: '—', trechos: 0,
+          status:   a.mbx_status || 'pendente',
+          anomalias:[], ids:[], criadoEm: a.criado_em
+        };
+      }
+      mapa[cid].trechos += (a.quantidade || 1);
+      mapa[cid].anomalias.push(a);
+      mapa[cid].ids.push(a.id);
+      if (a.mbx_status) mapa[cid].status = a.mbx_status;
+    });
+
+    // busca info de potencia/clientes dos circuitos em batch
+    const nomes = Object.values(mapa).map(m => m.circuitoNome).filter(Boolean);
+    if (nomes.length) {
+      const circs = await fetchAll('circuitos', { filters:{ ativo:true } });
+      circs.forEach(c => {
+        const cid = Object.keys(mapa).find(k => mapa[k].circuitoNome === c.nome);
+        if (cid) { mapa[cid].potencia = c.potencia||'—'; mapa[cid].clientes = c.clientes||0; }
+      });
+    }
+
+    dados = Object.values(mapa).sort((a,b) => b.trechos-a.trechos);
+
+    document.getElementById('sTrafos').textContent   = dados.length;
+    document.getElementById('sClientes').textContent = dados.reduce((s,d)=>s+(parseInt(d.clientes)||0),0);
+    document.getElementById('sTrechos').textContent  = dados.reduce((s,d)=>s+d.trechos,0);
+
+    renderLista();
+  } catch(e) { console.error(e); showErro('Erro ao buscar dados.'); }
+}
+
+function renderLista() {
+  const el = document.getElementById('lista');
+  let itens = dados.slice();
+  if (filtro !== 'todos') itens = itens.filter(d=>(d.status||'pendente')===filtro);
+
+  const lbls = { pendente:'Pendentes de avaliacao', mapeado:'Ja mapeados', tatico:'Enviados ao tatico', todos:'Todos os transformadores' };
+  document.getElementById('secTtl').textContent  = lbls[filtro]||'';
+  document.getElementById('cntPill').textContent = itens.length;
+
+  if (!itens.length) {
+    const msgs = { pendente:'Nenhum transformador pendente de avaliacao.<br><strong>Tudo avaliado!</strong>', mapeado:'Nenhum transformador marcado como mapeado ainda.', tatico:'Nenhum enviado ao tatico ainda.', todos:'Nenhuma anomalia MBX registrada ainda.' };
+    el.innerHTML='<div class="empty"><div class="empty-icon">🔄</div><p>'+(msgs[filtro]||'')+'</p></div>';
+    return;
+  }
+
+  el.innerHTML = itens.map(item => {
+    const cid    = item.circuitoId;
+    const status = item.status||'pendente';
+    const dt     = item.criadoEm ? new Date(item.criadoEm).toLocaleDateString('pt-BR') : '—';
+    const stBadge = status==='mapeado'
+      ? '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(26,86,196,.2);color:#7aabff;border:1px solid rgba(26,86,196,.4)">Mapeado</span>'
+      : status==='tatico'
+      ? '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(124,63,192,.2);color:#b57bee;border:1px solid rgba(124,63,192,.4)">Enviado ao tatico</span>'
+      : '';
+    const btns = status==='pendente'
+      ? `<button class="btn-acao btn-mapeado" data-cid="${cid}" data-acao="mapeado" onclick="acaoMBX(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ja e alvo mapeado</button>
+       <button class="btn-acao btn-tatico" data-cid="${cid}" data-acao="tatico" onclick="acaoMBX(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Enviar ao tatico</button>`
+      : `<button class="btn-acao btn-mapeado" data-cid="${cid}" data-acao="pendente" onclick="acaoMBX(this)" style="background:rgba(255,255,255,.07);color:var(--gr)">Reverter para pendente</button>`;
+    return `<div class="mbx-card" id="card-${cid}">
+      <div class="card-top">
+        <div><div class="card-nome">${item.circuitoNome}</div><div class="card-fiscal">Fiscal: ${item.fiscalNome}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div class="mux-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>${item.trechos} trecho${item.trechos>1?'s':''}</div>
+          ${stBadge}
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-val cli">${item.clientes||'—'}</div><div class="stat-lbl">Clientes</div></div>
+        <div class="stat-box"><div class="stat-val kva">${item.potencia||'—'}</div><div class="stat-lbl">kVA</div></div>
+        <div class="stat-box"><div class="stat-val trc">${item.trechos}</div><div class="stat-lbl">Trechos MBX</div></div>
+      </div>
+      <div class="card-info">
+        <div class="info-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Solicitado em <span>${dt}</span></div>
+        <div class="info-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${item.anomalias.length} apontamento${item.anomalias.length>1?'s':''}</div>
+      </div>
+      <div class="card-actions">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+window.acaoMBX = async function(btn) {
+  const cid  = btn.dataset.cid;
+  const acao = btn.dataset.acao;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const item = dados.find(d => d.circuitoId===cid);
+    if (item && item.ids.length) {
+      // atualiza todas as anomalias do circuito em batch
+      await Promise.all(item.ids.map(id =>
+        sb.from('anomalias').update({
+          mbx_status: acao,
+          mbx_atualizado_em: new Date().toISOString(),
+          mbx_admin_id: cUser.uid
+        }).eq('id', id)
+      ));
+      item.status = acao;
+    }
+    const subs = { mapeado:'Transformador marcado como alvo mapeado.', tatico:'Enviado ao tatico com sucesso.', pendente:'Revertido para pendente.' };
+    mostrarObrigado(subs[acao]||'Atualizado.');
+    if (filtro !== 'todos') {
+      const card = document.getElementById('card-'+cid);
+      if (card) { card.classList.add('saindo'); setTimeout(()=>renderLista(),350); }
+    } else { renderLista(); }
+  } catch(e) { console.error(e); btn.disabled=false; btn.textContent='Erro — tentar novamente'; }
+};
+
+function mostrarObrigado(sub) {
+  document.getElementById('toastObgSub').textContent = sub;
+  const t = document.getElementById('toastObg');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),5000);
+}
+
+window.setFiltro = function(f, btn) {
+  filtro=f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLista();
+};
+
+function showSk() {
+  document.getElementById('lista').innerHTML =
+    '<div class="sk" style="height:200px;margin-bottom:12px"></div>'
+    +'<div class="sk" style="height:200px;margin-bottom:12px"></div>'
+    +'<div class="sk" style="height:200px"></div>';
+}
+function showErro(msg) {
+  document.getElementById('lista').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>'+msg+'</p></div>';
+}
+</script>
+</body>
+</html>

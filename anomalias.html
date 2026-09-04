@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <title>Anomalias STCMETRO — Anomalias</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --eq-blue-dark:  #0a1628;
+      --eq-blue-mid:   #1a56c4;
+      --eq-cyan:       #00aaff;
+      --eq-purple-mid: #7c3fc0;
+      --eq-white:      #f0f4ff;
+      --eq-gray:       #8a9bbf;
+      --eq-error:      #ff4d6d;
+      --eq-success:    #00e5a0;
+      --eq-warning:    #ffb300;
+      --nav-h:         64px;
+      --top-h:         56px;
+    }
+
+    html, body {
+      height: 100%; font-family: 'Barlow', sans-serif;
+      background: var(--eq-blue-dark); color: var(--eq-white);
+      overflow-x: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--top-h);
+      background: rgba(10,22,40,0.97);
+      border-bottom: 1px solid rgba(0,170,255,0.15);
+      backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; gap: 10px;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 8px; }
+    .topbar-logo .icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--eq-blue-mid), var(--eq-purple-mid));
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo .icon svg { width: 16px; height: 16px; }
+    .topbar-logo span {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700; letter-spacing: 1px;
+      background: linear-gradient(90deg, #fff, var(--eq-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--eq-blue-mid), var(--eq-purple-mid));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+    }
+    .btn-logout {
+      background: none; border: 1px solid rgba(255,77,109,0.3);
+      border-radius: 7px; padding: 6px 8px; color: var(--eq-error);
+      cursor: pointer; font-size: 11px; font-weight: 600;
+    }
+    .btn-logout:hover { background: rgba(255,77,109,0.1); }
+
+    /* ── CONTEÚDO ── */
+    .content {
+      margin-top: var(--top-h);
+      margin-bottom: var(--nav-h);
+      padding: 20px 16px;
+    }
+
+    .page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(90deg, #fff, var(--eq-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-sub { font-size: 13px; color: var(--eq-gray); margin-top: 2px; margin-bottom: 16px; }
+
+    /* ── BUSCA ── */
+    .search-wrap { position: relative; margin-bottom: 14px; }
+    .search-input {
+      width: 100%; padding: 11px 16px 11px 40px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; color: var(--eq-white);
+      font-family: 'Barlow', sans-serif; font-size: 14px;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--eq-cyan); }
+    .search-input::placeholder { color: rgba(138,155,191,0.5); }
+    .search-icon {
+      position: absolute; left: 13px; top: 13px;
+      color: var(--eq-gray); pointer-events: none;
+    }
+
+    /* ── FILTROS ── */
+    .filtros {
+      display: flex; gap: 8px; margin-bottom: 16px;
+      overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
+    }
+    .filtros::-webkit-scrollbar { display: none; }
+    .filtro-btn {
+      padding: 7px 14px; border-radius: 20px; white-space: nowrap;
+      font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05); color: var(--eq-gray);
+      transition: all .2s; display: flex; align-items: center; gap: 6px;
+    }
+    .filtro-btn.active { background: rgba(0,170,255,0.12); border-color: rgba(0,170,255,0.35); color: var(--eq-cyan); }
+    .filtro-btn.poda.active    { background: rgba(255,179,0,0.12); border-color: rgba(255,179,0,0.35); color: var(--eq-warning); }
+    .filtro-btn.espacador.active { background: rgba(0,170,255,0.12); border-color: rgba(0,170,255,0.35); color: var(--eq-cyan); }
+    .filtro-btn.ramal   { border-color: rgba(0,229,160,0.3); color: var(--eq-success); }
+    .filtro-btn.ramal.active { background: rgba(0,229,160,0.15); border-color: rgba(0,229,160,0.6); }
+    .filtro-btn.mux   { border-color: rgba(181,123,238,0.3); color: #b57bee; }
+    .filtro-btn.mux.active { background: rgba(181,123,238,0.15); border-color: rgba(181,123,238,0.6); }
+    .filtro-btn.poste { border-color: rgba(180,120,60,0.3); color: #c8864a; }
+    .filtro-btn.poste.active { background: rgba(180,120,60,0.15); border-color: rgba(180,120,60,0.6); }
+    .filtro-btn.outros { border-color: rgba(100,100,100,0.3); color: #aaa; }
+    .filtro-btn.outros.active { background: rgba(100,100,100,0.15); border-color: rgba(100,100,100,0.6); }
+    .filtro-btn.pendente.active  { background: rgba(255,179,0,0.12); border-color: rgba(255,179,0,0.35); color: var(--eq-warning); }
+    .filtro-btn.programado.active{ background: rgba(124,63,192,0.12); border-color: rgba(124,63,192,0.35); color: #bf7fff; }
+    .filtro-btn.concluido.active { background: rgba(0,229,160,0.12); border-color: rgba(0,229,160,0.35); color: var(--eq-success); }
+
+    /* ── SUMÁRIO ── */
+    .summary-row { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 2px; }
+    .summary-row::-webkit-scrollbar { display: none; }
+    .sum-card {
+      flex-shrink: 0; min-width: 80px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 12px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .sum-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; }
+    .sum-label { font-size: 10px; color: var(--eq-gray); text-transform: uppercase; letter-spacing: .5px; text-align: center; }
+    .sum-card.total    .sum-val { color: var(--eq-cyan); }
+    .sum-card.pendente .sum-val { color: var(--eq-warning); }
+    .sum-card.programado .sum-val { color: #bf7fff; }
+    .sum-card.concluido  .sum-val { color: var(--eq-success); }
+    .sum-card.poda       .sum-val { color: var(--eq-warning); }
+    .sum-card.espacador  .sum-val { color: var(--eq-cyan); }
+    .sum-card.ramal .sum-val    { color: var(--eq-success); }
+    .sum-card.mux .sum-val      { color: #b57bee; }
+
+    /* ── SECTION HEADER ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700; letter-spacing: .8px;
+      color: var(--eq-gray); text-transform: uppercase;
+    }
+    .count-pill {
+      background: rgba(0,170,255,0.1); border: 1px solid rgba(0,170,255,0.2);
+      border-radius: 20px; padding: 2px 10px;
+      font-size: 12px; font-weight: 700; color: var(--eq-cyan);
+    }
+
+    /* ── CARD ANOMALIA ── */
+    .anomalia-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; overflow: hidden;
+      margin-bottom: 12px; transition: all .2s;
+    }
+    .anomalia-card:hover { border-color: rgba(0,170,255,0.2); }
+
+    .card-foto-wrap { position: relative; }
+    .lightbox{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:lbIn .2s ease}
+    @keyframes lbIn{from{opacity:0}to{opacity:1}}
+    .lightbox img{max-width:94vw;max-height:90vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.7);object-fit:contain}
+    .lightbox-close{position:absolute;top:16px;right:20px;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .card-foto{cursor:zoom-in}
+    .foto-conclusao{cursor:zoom-in}
+    .card-foto {
+      width: 100%; height: 160px; object-fit: cover;
+      display: block; background: rgba(255,255,255,0.04);
+    }
+    .card-foto-placeholder {
+      width: 100%; height: 120px;
+      background: rgba(255,255,255,0.04);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--eq-gray);
+    }
+    .card-tipo-badge {
+      position: absolute; top: 10px; left: 10px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      backdrop-filter: blur(8px);
+    }
+    .card-tipo-badge.poda      { background: rgba(255,179,0,0.85); color: #000; }
+    .card-tipo-badge.espacador { background: rgba(0,170,255,0.85); color: #fff; }
+    .card-tipo-badge.ramal     { background: rgba(0,229,160,0.12); color: var(--eq-success); border-color: rgba(0,229,160,0.3); }
+    .card-tipo-badge.mux       { background: rgba(181,123,238,0.12); color: #b57bee; border-color: rgba(181,123,238,0.3); }
+    .card-tipo-badge.fora      { background: rgba(255,77,109,0.12); color: var(--eq-error); border-color: rgba(255,77,109,0.3); }
+    .card-tipo-badge.poste     { background: rgba(180,120,60,0.12); color: #c8864a; border-color: rgba(180,120,60,0.3); }
+    .card-tipo-badge.outros    { background: rgba(100,100,100,0.12); color: #aaa; border-color: rgba(100,100,100,0.3); }
+
+    .card-status-badge {
+      position: absolute; top: 10px; right: 10px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+      backdrop-filter: blur(8px);
+    }
+    .card-status-badge.pendente   { background: rgba(255,179,0,0.85); color: #000; }
+    .card-status-badge.programado { background: rgba(124,63,192,0.85); color: #fff; }
+    .card-status-badge.concluido  { background: rgba(0,229,160,0.85); color: #000; }
+
+    .card-body { padding: 14px 16px; }
+    .card-circuito {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px; font-weight: 700; margin-bottom: 8px;
+      background: linear-gradient(90deg, #fff, var(--eq-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .card-meta { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .meta-row { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: var(--eq-gray); }
+    .meta-row svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 1px; }
+    .meta-row span { color: var(--eq-white); }
+
+    .foto-conclusao-wrap { margin-bottom: 12px; }
+    .foto-conclusao-label {
+      font-size: 11px; color: var(--eq-success); font-weight: 600;
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .foto-conclusao { width: 100%; border-radius: 8px; max-height: 140px; object-fit: cover; }
+
+    .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-sm {
+      padding: 8px 14px; border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+      cursor: pointer; border: none; transition: opacity .2s, transform .15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-sm:active { transform: scale(.97); }
+    .btn-primary-sm { background: linear-gradient(135deg, var(--eq-blue-mid), var(--eq-purple-mid)); color: #fff; }
+    .btn-outline-sm { background: transparent; border: 1px solid rgba(0,170,255,0.3); color: var(--eq-cyan); }
+    .btn-danger-sm  { background: transparent; border: 1px solid rgba(255,77,109,0.3); color: var(--eq-error); }
+    .btn-warning-sm { background: transparent; border: 1px solid rgba(255,179,0,0.35); color: var(--eq-warning); }
+    .btn-sm:hover { opacity: .85; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--nav-h);
+      background: rgba(10,22,40,0.97);
+      border-top: 1px solid rgba(0,170,255,0.15);
+      backdrop-filter: blur(16px);
+      display: flex; align-items: center;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 4px; padding: 8px 4px;
+      cursor: pointer; border: none; background: none; color: var(--eq-gray);
+      transition: color .2s; position: relative;
+    }
+    .nav-item.active { color: var(--eq-cyan); }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-label { font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+    .nav-item.active::after {
+      content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 2px;
+      background: var(--eq-cyan); border-radius: 0 0 4px 4px;
+    }
+    .nav-item.hidden { display: none; }
+    .badge {
+      position: absolute; top: 6px; right: calc(50% - 18px);
+      background: var(--eq-error); color: #fff;
+      font-size: 9px; font-weight: 700; min-width: 16px; height: 16px;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px;
+    }
+
+    /* ── MODAL BASE ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      width: 100%; max-width: 520px;
+      background: #0d1f3c; border: 1px solid rgba(0,170,255,0.2);
+      border-radius: 20px 20px 0 0; padding: 24px 20px 32px;
+      transform: translateY(100%); transition: transform .35s cubic-bezier(.16,1,.3,1);
+      max-height: 85vh; overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 20px; }
+    .modal-title {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px;
+      background: linear-gradient(90deg, #fff, var(--eq-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .modal-sub { font-size: 13px; color: var(--eq-gray); margin-bottom: 20px; }
+    .modal-label { font-size: 11px; font-weight: 600; letter-spacing: .8px; color: var(--eq-gray); text-transform: uppercase; margin-bottom: 6px; display: block; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-info-item { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:8px; padding:8px 10px; }
+    .modal-info-item.full { grid-column:1/-1; }
+    .info-label { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--eq-gray); margin-bottom:3px; }
+    .info-val { font-size:13px; color:var(--eq-white); font-weight:500; }
+    .btn-cancel {
+      flex: 1; padding: 13px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--eq-gray);
+      font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+    }
+    .btn-save {
+      flex: 2; padding: 13px;
+      background: linear-gradient(135deg, var(--eq-blue-mid), var(--eq-purple-mid));
+      border: none; border-radius: 10px; color: #fff;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+    }
+    .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── EQ PICKER — dropdown de equipe limpo ── */
+    .eq-pick-btn {
+      width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; color: var(--eq-gray);
+      font-family: 'Barlow', sans-serif; font-size: 14px;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      transition: border-color .2s; user-select: none;
+    }
+    .eq-pick-btn:hover  { border-color: rgba(0,170,255,0.4); }
+    .eq-pick-btn.filled { color: var(--eq-white); border-color: rgba(0,170,255,0.3); }
+    .eq-pick-btn svg    { flex-shrink: 0; color: var(--eq-gray); transition: transform .2s; }
+    .eq-pick-btn.open svg { transform: rotate(180deg); }
+
+    .eq-pick-drop {
+      display: none;
+      margin-top: 4px;
+      background: #0b1a30;
+      border: 1px solid rgba(0,170,255,0.2);
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    }
+    .eq-pick-drop.open { display: block; }
+
+    .eq-pick-search {
+      display: block; width: 100%; padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border: none; border-bottom: 1px solid rgba(255,255,255,0.07);
+      color: var(--eq-white); font-family: 'Barlow', sans-serif; font-size: 13px;
+      outline: none;
+    }
+    .eq-pick-search::placeholder { color: rgba(138,155,191,0.5); }
+
+    .eq-pick-list { max-height: 200px; overflow-y: auto; }
+    .eq-pick-list::-webkit-scrollbar { width: 4px; }
+    .eq-pick-list::-webkit-scrollbar-thumb { background: rgba(0,170,255,0.2); border-radius: 2px; }
+
+    .eq-pick-opt {
+      padding: 11px 16px; font-size: 13px; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--eq-white); transition: background .15s;
+    }
+    .eq-pick-opt:last-child { border-bottom: none; }
+    .eq-pick-opt:hover   { background: rgba(0,170,255,0.1); color: var(--eq-cyan); }
+    .eq-pick-opt.active  { background: rgba(0,170,255,0.14); color: var(--eq-cyan); font-weight: 600; }
+    .eq-pick-empty { padding: 14px 16px; font-size: 13px; color: var(--eq-gray); text-align: center; }
+
+    /* skeleton / empty */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 14px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .empty { text-align: center; padding: 60px 20px; color: var(--eq-gray); }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; line-height: 1.6; }
+
+    /* toast */
+    .toast {
+      position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%;
+      transform: translateX(-50%) translateY(20px); z-index: 3000;
+      background: rgba(10,22,40,0.97); border-radius: 10px;
+      padding: 12px 20px; font-size: 14px; font-weight: 500;
+      border: 1px solid rgba(0,229,160,0.3); color: var(--eq-success);
+      opacity: 0; transition: all .3s; white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { border-color: rgba(255,77,109,0.3); color: var(--eq-error); }
+
+    .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Botões da barra de ações ── */
+    .bar-action {
+      display:flex; align-items:center; gap:6px;
+      padding:7px 14px; border-radius:8px;
+      background:rgba(var(--c),.12); border:1px solid rgba(var(--c),.35);
+      color:rgb(var(--c)); font-family:'Barlow Condensed',sans-serif;
+      font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+      cursor:pointer; transition:all .2s;
+    }
+    .bar-action:hover:not(:disabled) { background:rgba(var(--c),.2); }
+    .bar-action:disabled { opacity:.4; cursor:not-allowed; }
+
+    /* ── Pareamento serviço ↔ foto (concluir em lote) ── */
+    .pair-row {
+      display:flex; align-items:center; gap:10px;
+      padding:8px; border:1px solid rgba(255,255,255,.08);
+      border-radius:10px; background:rgba(255,255,255,.03); margin-bottom:8px;
+    }
+    .pair-num {
+      flex-shrink:0; width:24px; height:24px; border-radius:50%;
+      background:rgba(0,170,255,.15); color:var(--eq-cyan);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px;
+    }
+    .pair-info { flex:1; min-width:0; }
+    .pair-info .pi-circ { font-size:13px; font-weight:600; color:var(--eq-white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pair-info .pi-end { font-size:11px; color:var(--eq-gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pair-thumb {
+      flex-shrink:0; width:52px; height:52px; border-radius:8px; object-fit:cover;
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+    }
+    .pair-thumb-empty {
+      flex-shrink:0; width:52px; height:52px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(255,77,109,.08); border:1px dashed rgba(255,77,109,.35);
+      color:var(--eq-error); font-size:18px;
+    }
+    .pair-reorder { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+    .pair-reorder button {
+      width:22px; height:18px; border-radius:4px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05); color:var(--eq-gray); cursor:pointer;
+      display:flex; align-items:center; justify-content:center; padding:0; line-height:0;
+    }
+    .pair-reorder button:hover { color:var(--eq-cyan); border-color:rgba(0,170,255,.4); }
+    .pair-reorder button:disabled { opacity:.3; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
+    </div>
+    <span>STCMETRO</span>
+  </div>
+  <div class="topbar-right">
+    <div class="avatar" id="avatarEl">?</div>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="content">
+  <div class="page-title">Anomalias</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px;flex-wrap:wrap">
+    <div class="page-sub" id="pageSub" style="margin-bottom:0">Carregando...</div>
+    <div style="display:flex;gap:8px">
+      <button id="btnModoSelecao" onclick="toggleModoSelecao()" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:rgba(0,170,255,.1);border:1px solid rgba(0,170,255,.3);border-radius:8px;color:var(--eq-cyan);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:all .2s">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span id="btnModoSelecaoLbl">Selecionar</span>
+      </button>
+      <button id="btnExportarPendentes" onclick="exportarPendentes()" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);border-radius:8px;color:var(--eq-success);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:background .2s">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- busca -->
+  <div class="search-wrap">
+    <div class="search-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </div>
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar por endereço, circuito ou postes..." oninput="renderLista()"/>
+  </div>
+
+  <!-- Barra de seleção múltipla (modo seleção) -->
+  <div id="barraSelecao" style="display:none;flex-direction:column;gap:10px;padding:10px 12px;background:rgba(21,101,192,.1);border:1px solid rgba(21,101,192,.25);border-radius:10px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--eq-white);user-select:none">
+        <input type="checkbox" id="checkTodas" onchange="toggleSelecionarTodas(this)" style="width:16px;height:16px;accent-color:#1565C0;cursor:pointer">
+        Selecionar todas
+      </label>
+      <span id="contadorSelecionadas" style="font-size:12px;color:var(--eq-gray)">0 selecionadas</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="btnExportarFotos" onclick="exportarFotosSelecionadas()" disabled class="bar-action" style="--c:0,229,160">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar fotos
+      </button>
+      <button id="btnConcluirLote" onclick="abrirConcluirLote()" disabled class="bar-action" style="--c:0,229,160">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Concluir c/ fotos
+      </button>
+      <button id="btnProgramarLote" onclick="abrirProgramarLote()" disabled class="bar-action" style="--c:21,101,192">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Programar
+      </button>
+      <button id="btnCancelarProgLote" onclick="cancelarProgramacaoLote()" disabled class="bar-action" style="--c:255,179,0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg>
+        Cancelar prog.
+      </button>
+    </div>
+  </div>
+
+  <!-- filtros tipo -->
+  <div class="filtros" id="filtrosTipo">
+    <button class="filtro-btn active" onclick="setFiltroTipo('todos', this)">Todos</button>
+    <button class="filtro-btn poda" onclick="setFiltroTipo('poda', this)">✂ Poda</button>
+    <button class="filtro-btn espacador" onclick="setFiltroTipo('espacador', this)">⊕ Espaçador</button>
+    <button class="filtro-btn ramal" onclick="setFiltroTipo('ramal', this)">🏠 Ramal</button>
+    <button class="filtro-btn fora" onclick="setFiltroTipo('fora', this)">⚠️ Fora Padrão</button>
+    <button class="filtro-btn poste" onclick="setFiltroTipo('poste', this)">🪵 Sub. Poste</button>
+    <button class="filtro-btn outros" onclick="setFiltroTipo('outros', this)">📋 Outros</button>
+  </div>
+
+  <!-- filtros status -->
+  <div class="filtros" id="filtrosStatus">
+    <button class="filtro-btn active" onclick="setFiltroStatus('todos', this)">Todos status</button>
+    <button class="filtro-btn pendente" onclick="setFiltroStatus('pendente', this)">⏳ Pendente</button>
+    <button class="filtro-btn programado" onclick="setFiltroStatus('programado', this)">📋 Programado</button>
+    <button class="filtro-btn concluido" onclick="setFiltroStatus('concluido', this)">✓ Concluído</button>
+  </div>
+
+  <!-- sumário -->
+  <div class="summary-row">
+    <div class="sum-card total"><div class="sum-val" id="sumTotal">—</div><div class="sum-label">Total</div></div>
+    <div class="sum-card pendente"><div class="sum-val" id="sumPendente">—</div><div class="sum-label">Pendentes</div></div>
+    <div class="sum-card programado"><div class="sum-val" id="sumProgramado">—</div><div class="sum-label">Programados</div></div>
+    <div class="sum-card concluido"><div class="sum-val" id="sumConcluido">—</div><div class="sum-label">Concluídos</div></div>
+    <div class="sum-card poda"><div class="sum-val" id="sumPoda">—</div><div class="sum-label">Podas</div></div>
+    <div class="sum-card espacador"><div class="sum-val" id="sumEspacador">—</div><div class="sum-label">Espaçadores</div></div>
+    <div class="sum-card ramal"><div class="sum-val" id="sumRamal">—</div><div class="sum-label">Ramais</div></div>
+  </div>
+
+  <!-- lista -->
+  <div class="section-header">
+    <div class="section-title" id="sectionTitle">Registros</div>
+    <div class="count-pill" id="countPill">0</div>
+  </div>
+
+  <div id="listaAnomalias">
+    <div class="skeleton" style="height:280px;margin-bottom:12px;"></div>
+    <div class="skeleton" style="height:280px;margin-bottom:12px;"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<script>
+  // Guard de pré-render: esconde itens condicionais até a auth confirmar o perfil.
+  // aplicarNav() (no script principal) REMOVE este <style> e define a visibilidade real.
+  document.write('<style id="navInitStyle">#nav-anomalias,#nav-dashboard,#nav-circuitos,#nav-mbx{display:none}</style>');
+</script>
+<nav class="bottom-nav">
+  <button class="nav-item" id="nav-mapa" onclick="window.location.href='mapa.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+    <span class="nav-label">Mapa</span>
+  </button>
+  <button class="nav-item active" id="nav-anomalias" onclick="window.location.href='anomalias.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="nav-label">Anomalias</span>
+  </button>
+  <button class="nav-item" id="nav-pendencias" onclick="window.location.href='pendencias.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span class="nav-label">Pendências</span>
+    <span class="badge" id="badgePendencias" style="display:none"></span>
+  </button>
+  <button class="nav-item" id="nav-dashboard" onclick="window.location.href='dashboard.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span class="nav-label">Dashboard</span>
+  </button>
+  <button class="nav-item" id="nav-mbx" onclick="location.href='mbx.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    <span class="nav-label">MBX</span>
+  </button>
+  <button class="nav-item" id="nav-circuitos" onclick="window.location.href='circuitos.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="nav-label">Circuitos</span>
+  </button>
+</nav>
+
+<!-- MODAL: programar LOTE (admin) -->
+<div class="modal-overlay" id="modalProgramarLote" onclick="if(event.target===this)fecharProgramarLote()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 Programar em lote</div>
+    <div class="modal-sub" id="loteSubtitulo">Programar anomalias selecionadas</div>
+    <label class="modal-label" style="margin-top:4px">Equipe responsável</label>
+    <!-- EqPicker lote -->
+    <div id="eqPickerLote"></div>
+    <div id="loteProgressWrap" style="display:none;margin-top:14px">
+      <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+        <div id="loteProgressBar" style="height:100%;width:0%;background:#1565C0;border-radius:3px;transition:width .3s"></div>
+      </div>
+      <div id="loteProgressLabel" style="font-size:11px;color:var(--eq-gray);margin-top:4px;text-align:center"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharProgramarLote()">Cancelar</button>
+      <button class="btn-save" id="btnConfirmarLote" onclick="confirmarProgramarLote()">Programar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: programar individual (admin) -->
+<div class="modal-overlay" id="modalProgramar">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Programar Serviço</div>
+    <div class="modal-sub" id="modalProgramarSub">Selecione a equipe responsável pelo serviço.</div>
+    <label class="modal-label">Equipe responsável</label>
+    <!-- EqPicker individual -->
+    <div id="eqPickerProg"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModalProgramar()">Cancelar</button>
+      <button class="btn-save" id="btnProgramarConfirmar" onclick="confirmarProgramar()">Programar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: concluir serviço (admin) -->
+<div class="modal-overlay" id="modalConcluir">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Concluir Serviço</div>
+    <div class="modal-sub" id="modalConcluirSub">Preencha os dados para registrar a conclusão.</div>
+
+    <div id="modalConcluirInfoGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px"></div>
+
+    <div id="modalConcluirEquipeWrap" style="display:none;margin-bottom:14px">
+      <label class="modal-label">Equipe executora</label>
+      <!-- EqPicker conclusão -->
+      <div id="eqPickerConc"></div>
+    </div>
+
+    <label class="modal-label">Foto de conclusão (obrigatória)</label>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button id="btnCameraConc" onclick="abrirFotoConc('camera')" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--eq-white);cursor:pointer;font-size:13px;transition:all .2s">
+        📷 Câmera
+      </button>
+      <button id="btnGaleriaConc" onclick="abrirFotoConc('galeria')" style="flex:1;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--eq-white);cursor:pointer;font-size:13px;transition:all .2s">
+        🖼 Galeria
+      </button>
+    </div>
+    <img id="fotoPreviewConc" src="" alt="Preview" style="display:none;width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover"/>
+
+    <label class="modal-label">Observações (opcional)</label>
+    <textarea id="obsConc" placeholder="Observações sobre a conclusão..." style="width:100%;padding:10px 12px;min-height:70px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--eq-white);font-family:'Barlow',sans-serif;font-size:14px;resize:none;outline:none;margin-bottom:14px"></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModalConcluir()">Cancelar</button>
+      <button class="btn-save" id="btnConcluirConfirmar" onclick="confirmarConcluir()">✓ Concluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: concluir em LOTE com fotos posicionais (admin) -->
+<div class="modal-overlay" id="modalConcluirLote" onclick="if(event.target===this)fecharConcluirLote()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✓ Concluir em lote</div>
+    <div class="modal-sub" id="concLoteSub">Importe as fotos na ordem dos serviços selecionados.</div>
+
+    <label class="modal-label">Equipe executora (aplicada a todos)</label>
+    <div id="eqPickerConcLote"></div>
+
+    <div style="margin-top:14px">
+      <button id="btnPickFotosLote" onclick="pickFotosLote()" style="width:100%;padding:11px;background:rgba(0,170,255,.1);border:1px dashed rgba(0,170,255,.4);border-radius:10px;color:var(--eq-cyan);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span id="btnPickFotosLoteLbl">Selecionar fotos</span>
+      </button>
+    </div>
+
+    <div id="concLoteAviso" style="display:none;margin-top:10px;padding:8px 10px;background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.3);border-radius:8px;font-size:12px;color:var(--eq-warning);line-height:1.4"></div>
+
+    <div id="concLotePairs" style="margin-top:14px"></div>
+
+    <div id="concLoteProgressWrap" style="display:none;margin-top:12px">
+      <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+        <div id="concLoteProgressBar" style="height:100%;width:0%;background:#00e5a0;border-radius:3px;transition:width .3s"></div>
+      </div>
+      <div id="concLoteProgressLabel" style="font-size:11px;color:var(--eq-gray);margin-top:4px;text-align:center"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharConcluirLote()">Cancelar</button>
+      <button class="btn-save" id="btnConfirmarConcLote" onclick="confirmarConcluirLote()" disabled>Concluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" style="display:none" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="Foto ampliada"/>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://evejimevrfxyzavuquis.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2ZWppbWV2cmZ4eXphdnVxdWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MjA5OTEsImV4cCI6MjEwNDA5Njk5MX0.AlOuF3z9CUCZ_54mt1c8h7UFGWn993onI80mllVGSXo';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function fetchAll(table, opts={}) {
+    const {select='*',filters={},order=null}=opts;
+    let results=[],offset=0,limit=1000;
+    while(true){
+      let q=sb.from(table).select(select).range(offset,offset+limit-1);
+      for(const[col,val]of Object.entries(filters)){
+        if(val===null)q=q.is(col,null);
+        else if(Array.isArray(val))q=q.in(col,val);
+        else q=q.eq(col,val);
+      }
+      if(order)q=q.order(order.col,{ascending:order.asc??true});
+      const{data,error}=await q;
+      if(error){console.error(`fetchAll(${table}):`,error);break;}
+      results=results.concat(data||[]);
+      if((data||[]).length<limit)break;
+      offset+=limit;
+    }
+    return results;
+  }
+
+  function cldThumb(url){return url?url.replace('/upload/','/upload/w_400,q_65,f_auto/'):url;}
+  function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('pt-BR');}
+
+  // ── EqPicker: dropdown de equipe limpo e com busca ──────────────────────────
+  // Uso: const picker = createEqPicker('idDoContainer');
+  //      await picker.load(arrayDeEquipes);  // [{id, nome}]
+  //      picker.getValue()  → id selecionado ou null
+  //      picker.getNome()   → nome selecionado ou null
+  //      picker.reset()     → limpa seleção
+  function createEqPicker(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+
+    let selectedId = null, selectedNome = null, equipes = [];
+
+    container.innerHTML = `
+      <div class="eq-pick-btn" id="${containerId}-btn" role="button" tabindex="0">
+        <span class="eq-pick-label">Selecione a equipe...</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="eq-pick-drop" id="${containerId}-drop">
+        <input class="eq-pick-search" id="${containerId}-search" type="text"
+          placeholder="Buscar equipe..." autocomplete="off" autocapitalize="none" spellcheck="false"/>
+        <div class="eq-pick-list" id="${containerId}-list"></div>
+      </div>`;
+
+    const btn    = document.getElementById(`${containerId}-btn`);
+    const drop   = document.getElementById(`${containerId}-drop`);
+    const search = document.getElementById(`${containerId}-search`);
+    const list   = document.getElementById(`${containerId}-list`);
+
+    function renderList(q) {
+      const term = (q || '').toLowerCase().trim();
+      const filtered = term ? equipes.filter(e => e.nome.toLowerCase().includes(term)) : equipes;
+      if (!filtered.length) {
+        list.innerHTML = `<div class="eq-pick-empty">Nenhuma equipe encontrada</div>`;
+        return;
+      }
+      list.innerHTML = filtered.map(e =>
+        `<div class="eq-pick-opt${e.id === selectedId ? ' active' : ''}"
+          data-id="${e.id}" data-nome="${e.nome.replace(/"/g,'&quot;')}">${e.nome}</div>`
+      ).join('');
+      list.querySelectorAll('.eq-pick-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          selectedId   = el.dataset.id;
+          selectedNome = el.dataset.nome;
+          setLabel(selectedNome);
+          closeDropdown();
+        });
+      });
+    }
+
+    function setLabel(text) {
+      btn.querySelector('.eq-pick-label').textContent = text || 'Selecione a equipe...';
+      btn.classList.toggle('filled', !!text);
+    }
+
+    function openDropdown() {
+      drop.classList.add('open');
+      btn.classList.add('open');
+      renderList('');
+      search.value = '';
+      setTimeout(() => search.focus(), 60);
+    }
+
+    function closeDropdown() {
+      drop.classList.remove('open');
+      btn.classList.remove('open');
+    }
+
+    btn.addEventListener('click', () => {
+      drop.classList.contains('open') ? closeDropdown() : openDropdown();
+    });
+    btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drop.classList.contains('open') ? closeDropdown() : openDropdown(); } });
+    search.addEventListener('input', () => renderList(search.value));
+    search.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
+
+    // fecha ao clicar fora
+    document.addEventListener('click', e => {
+      if (!container.contains(e.target)) closeDropdown();
+    }, true);
+
+    return {
+      load(list) {
+        equipes = list;
+        selectedId = null; selectedNome = null;
+        setLabel(null);
+        renderList('');
+      },
+      setSelected(id) {
+        const eq = equipes.find(e => e.id === id);
+        if (eq) { selectedId = eq.id; selectedNome = eq.nome; setLabel(eq.nome); renderList(''); }
+      },
+      getValue()  { return selectedId; },
+      getNome()   { return selectedNome; },
+      reset() {
+        selectedId = null; selectedNome = null;
+        setLabel(null); closeDropdown(); search.value = '';
+      }
+    };
+  }
+
+  // instâncias dos pickers (criadas após o DOM estar pronto)
+  let pickerProg = null, pickerLote = null, pickerConc = null, pickerConcLote = null;
+  document.addEventListener('DOMContentLoaded', () => {
+    pickerProg     = createEqPicker('eqPickerProg');
+    pickerLote     = createEqPicker('eqPickerLote');
+    pickerConc     = createEqPicker('eqPickerConc');
+    pickerConcLote = createEqPicker('eqPickerConcLote');
+  });
+
+  // ── estado global ──
+  let currentUser=null, currentPerfil=null, todasAnomalias=[];
+  let filtroTipo='todos', filtroStatus='todos', programarId=null;
+  let modoSelecao=false; // controla exibição dos checkboxes em todos os cards
+
+  (async()=>{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='index.html';return;}
+    const{data:u}=await sb.from('usuarios').select('*').eq('auth_id',session.user.id).single();
+    if(!u){await sb.auth.signOut();window.location.href='index.html';return;}
+    if(u.perfil==='equipe'){window.location.href='mapa.html';return;}
+    currentUser={uid:u.id,...u};
+    currentPerfil=u.perfil;
+    sessionStorage.setItem('userPerfil',u.perfil);
+    document.getElementById('avatarEl').textContent=u.nome.charAt(0).toUpperCase();
+    aplicarNav(currentPerfil,'anomalias');
+    if(currentPerfil==='admin'){
+      document.getElementById('pageSub').textContent='Todas as anomalias registradas';
+      const btnExp=document.getElementById('btnExportarPendentes');
+      if(btnExp)btnExp.style.display='flex';
+      const btnSel=document.getElementById('btnModoSelecao');
+      if(btnSel)btnSel.style.display='inline-flex';
+    } else {
+      document.getElementById('pageSub').textContent='Anomalias que você registrou';
+    }
+    await carregarAnomalias();
+    await carregarBadgePendencias();
+  })();
+
+  window.logout=async()=>{await sb.auth.signOut();sessionStorage.clear();window.location.href='index.html';};
+
+  // ── Navegação: remove o guard de pré-render e define visibilidade explícita ──
+  // (o <style id="navInitStyle"> usa seletor de ID com display:none, que vence
+  //  qualquer classList; por isso precisa ser REMOVIDO, não apenas sobrescrito)
+  function aplicarNav(perfil, active){
+    const guard=document.getElementById('navInitStyle');
+    if(guard)guard.remove();
+    const vis={
+      admin:  ['nav-mapa','nav-anomalias','nav-pendencias','nav-dashboard','nav-mbx','nav-circuitos'],
+      fiscal: ['nav-mapa','nav-anomalias','nav-pendencias'],
+      equipe: ['nav-mapa','nav-pendencias']
+    }[perfil]||['nav-mapa','nav-pendencias'];
+    ['nav-mapa','nav-anomalias','nav-pendencias','nav-dashboard','nav-mbx','nav-circuitos'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.classList.remove('hidden');
+      el.style.display=vis.includes(id)?'':'none';
+      if(active)el.classList.toggle('active',id==='nav-'+active);
+    });
+  }
+
+  async function carregarAnomalias(){
+    const filters=currentPerfil==='admin'?{}:{fiscal_id:currentUser.uid};
+    const[allAnom,_deco,_conj,_circ]=await Promise.all([
+      fetchAll('anomalias',{filters,order:{col:'criado_em',asc:false}}),
+      fetchAll('decometro'),
+      fetchAll('conjuntos_dec'),
+      fetchAll('circuitos',{select:'id,nome,clientes'}),
+    ]);
+    todasAnomalias=allAnom.filter(a=>a.tipo!=='mux');
+    window._decoCache=_deco;
+    window._conjCache=_conj;
+    window._circCache=_circ;
+    atualizarSumario();
+    renderLista();
+  }
+
+  function atualizarSumario(){
+    document.getElementById('sumTotal').textContent=todasAnomalias.length;
+    document.getElementById('sumPendente').textContent=todasAnomalias.filter(a=>a.status==='pendente').length;
+    document.getElementById('sumProgramado').textContent=todasAnomalias.filter(a=>a.status==='programado').length;
+    document.getElementById('sumConcluido').textContent=todasAnomalias.filter(a=>a.status==='concluido').length;
+    document.getElementById('sumPoda').textContent=todasAnomalias.filter(a=>a.tipo==='poda').length;
+    document.getElementById('sumEspacador').textContent=todasAnomalias.filter(a=>a.tipo==='espacador').length;
+    document.getElementById('sumRamal').textContent=todasAnomalias.filter(a=>a.tipo==='ramal').length;
+  }
+
+  window.renderLista=function(){
+    const busca=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+    let itens=[...todasAnomalias];
+    if(filtroTipo!=='todos')   itens=itens.filter(a=>a.tipo===filtroTipo);
+    if(filtroStatus!=='todos') itens=itens.filter(a=>a.status===filtroStatus);
+    if(busca) itens=itens.filter(a=>
+      (a.endereco||'').toLowerCase().includes(busca)||
+      (a.circuito_nome||'').toLowerCase().includes(busca)||
+      (a.postes||'').toLowerCase().includes(busca)||
+      (a.fiscal_nome||'').toLowerCase().includes(busca)
+    );
+    document.getElementById('countPill').textContent=itens.length;
+    const tipoLabelMap={poda:'✂ Podas',espacador:'⊕ Espaçadores',ramal:'🏠 Ramais',fora:'⚠️ Fora Padrão',poste:'🪵 Sub. Postes',outros:'📋 Outros'};
+    document.getElementById('sectionTitle').textContent=filtroTipo!=='todos'?(tipoLabelMap[filtroTipo]||filtroTipo):'Todos os registros';
+
+    const lista=document.getElementById('listaAnomalias');
+    if(!itens.length){
+      lista.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Nenhuma anomalia encontrada<br/>para os filtros aplicados.</p></div>';
+      atualizarBarraSelecao([]);
+      return;
+    }
+
+    // A barra de ações aparece apenas no modo seleção (admin)
+    const mostrarBarra = currentPerfil==='admin' && modoSelecao;
+    document.getElementById('barraSelecao').style.display = mostrarBarra ? 'flex' : 'none';
+    if(mostrarBarra){
+      const ct=document.getElementById('checkTodas');
+      if(ct){ct.checked=false;ct.indeterminate=false;}
+    }
+
+    const tipoLabel={poda:'✂ Poda',espacador:'⊕ Espaçador',ramal:'🏠 Ramal',fora:'⚠️ Fora Padrão',poste:'🪵 Sub. Poste',outros:'📋 Outros'};
+    const statusLabel={pendente:'⏳ Pendente',programado:'📋 Programado',concluido:'✓ Concluído'};
+    const isAdmin=currentPerfil==='admin';
+    const isFiscal=currentPerfil==='fiscal';
+
+    const cards=itens.map(function(a){
+      const idS=String(a.id||'').replace(/['"<>&]/g,'');
+      const cirS=String(a.circuito_id||'').replace(/['"<>&]/g,'');
+      const tipS=tipoLabel[a.tipo]||a.tipo||'';
+      const stS=statusLabel[a.status]||a.status||'';
+      const dataStr=fmtDate(a.criado_em);
+      // No modo seleção, qualquer anomalia é selecionável (export, conclusão, etc.)
+      const podeS=isAdmin&&modoSelecao;
+      const posS=(a.postes||'').replace(/'/g,"\\'");
+
+      let foto=a.foto_url
+        ?'<img class="card-foto lb-trigger" src="'+cldThumb(a.foto_url)+'" data-full="'+a.foto_url+'" alt="Foto" loading="lazy"/>'
+        :'<div class="card-foto-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
+
+      let fotoConc=a.foto_concluido_url
+        ?'<div class="foto-conclusao-wrap"><div class="foto-conclusao-label">✓ Foto de conclusão</div><img class="foto-conclusao lb-trigger" src="'+cldThumb(a.foto_concluido_url)+'" data-full="'+a.foto_concluido_url+'" alt="Foto conclusão" loading="lazy"/></div>'
+        :'';
+
+      let cjBadge='',mzBadge='';
+      try{cjBadge=anomConjuntoBadge(a.circuito_nome||a.circuito_id);}catch(e){}
+      try{mzBadge=anomMatrizBadge(a.circuito_nome||a.circuito_id);}catch(e){}
+
+      const temFoto=!!(a.foto_url||a.foto_concluido_url);
+      let chk=podeS
+        ?'<label style="position:absolute;bottom:8px;left:8px;z-index:3;cursor:pointer;background:rgba(8,17,38,.75);border-radius:5px;padding:3px;line-height:0;touch-action:manipulation"><input type="checkbox" class="anom-check" data-id="'+idS+'" data-status="'+(a.status||'')+'" data-tipo="'+(a.tipo||'')+'" data-temfoto="'+(temFoto?'1':'0')+'" onchange="atualizarSelecao()" style="width:20px;height:20px;accent-color:#1565C0;cursor:pointer;display:block"></label>'
+        :'';
+
+      let eqHtml=a.equipe_id?'<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Equipe: <span>'+(a.equipe_nome||'—')+'</span></div>':'';
+
+      let btns='<button class="btn-sm btn-outline-sm" onclick="verNoMapa(\''+cirS+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>Ver no mapa</button>';
+      if(isAdmin&&a.status==='pendente'&&a.tipo!=='mux')
+        btns+='<button class="btn-sm btn-primary-sm" onclick="openModalProgramar(\''+idS+'\',\''+a.tipo+'\',\''+posS+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Programar</button>';
+      if(isAdmin&&a.status!=='concluido')
+        btns+='<button class="btn-sm btn-success-sm" onclick="openModalConcluir(\''+idS+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Concluir</button>';
+      if(isAdmin&&a.status==='programado')
+        btns+='<button class="btn-sm btn-warning-sm" onclick="cancelarProgramacao(\''+idS+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg>Cancelar prog.</button>';
+      if((isAdmin||(isFiscal&&a.fiscal_id===currentUser.uid))&&a.status!=='concluido')
+        btns+='<button class="btn-sm btn-danger-sm" onclick="excluirAnomalia(\''+idS+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Excluir</button>';
+
+      let obs=(a.observacao||a.fora_obs)?'<div style="margin-bottom:10px;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;font-size:12px;color:#8a9bbf;line-height:1.4"><span style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:3px;color:#6b7fa0">Observação</span>'+(a.observacao||a.fora_obs)+'</div>':'';
+
+      return '<div class="anomalia-card" style="position:relative">'
+        +'<div class="card-foto-wrap" style="position:relative">'
+          +foto
+          +'<span class="card-tipo-badge '+a.tipo+'">'+tipS+'</span>'
+          +'<span class="card-status-badge '+a.status+'">'+stS+'</span>'
+          +chk
+        +'</div>'
+        +'<div class="card-body">'
+          +'<div class="card-circuito">'+(a.circuito_nome||a.circuito_id||'—')+'</div>'
+          +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 8px">'+cjBadge+mzBadge+'</div>'
+          +'<div class="card-meta">'
+            +'<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 14 8 14s8-8.75 8-14a8 8 0 0 0-8-8z"/></svg><span>'+(a.endereco||'—')+'</span></div>'
+            +'<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/></svg>Entre postes: <span>'+(a.postes||'—')+'</span></div>'
+            +'<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Registrado em <span>'+dataStr+'</span></div>'
+            +(isAdmin?'<div class="meta-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Fiscal: <span>'+(a.fiscal_nome||'—')+'</span></div>':'')
+            +eqHtml
+          +'</div>'
+          +fotoConc
+          +obs
+          +'<div class="card-actions">'+btns+'</div>'
+        +'</div>'
+      +'</div>';
+    });
+
+    lista.innerHTML=cards.join('');
+  };
+
+  function resetarSelecao(){
+    document.querySelectorAll('.anom-check').forEach(c=>c.checked=false);
+    const ct=document.getElementById('checkTodas');
+    if(ct){ct.checked=false;ct.indeterminate=false;}
+    atualizarBarraSelecao([]);
+  }
+  window.setFiltroTipo=function(tipo,btn){filtroTipo=tipo;document.querySelectorAll('#filtrosTipo .filtro-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');resetarSelecao();renderLista();};
+  window.setFiltroStatus=function(status,btn){filtroStatus=status;document.querySelectorAll('#filtrosStatus .filtro-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');resetarSelecao();renderLista();};
+  window.verNoMapa=function(cid){sessionStorage.setItem('circuitoSelecionado',cid);window.location.href='mapa.html';};
+
+  window.excluirAnomalia=async function(id){
+    if(!confirm('Excluir este registro de anomalia?'))return;
+    try{
+      await sb.from('anomalias').delete().eq('id',id);
+      todasAnomalias=todasAnomalias.filter(a=>a.id!==id);
+      atualizarSumario();renderLista();
+      showToast('Anomalia excluída.');
+    }catch{showToast('Erro ao excluir.',true);}
+  };
+
+  // ── Cancelar programação: reverte de 'programado' para 'pendente' ────────────
+  window.cancelarProgramacao=async function(id){
+    const a=todasAnomalias.find(x=>String(x.id)===String(id));
+    if(!a)return;
+    const eqNome=a.equipe_nome||'a equipe atual';
+    if(!confirm(`Cancelar a programação desta anomalia?\nEla voltará para "Pendente" e sairá da fila de ${eqNome}.`))return;
+    try{
+      const{error}=await sb.from('anomalias').update({
+        status:'pendente',
+        equipe_id:null,
+        equipe_nome:null,
+        programado_em:null
+      }).eq('id',id);
+      if(error)throw error;
+      // atualiza cache local sem refetch completo
+      a.status='pendente';
+      a.equipe_id=null;
+      a.equipe_nome=null;
+      a.programado_em=null;
+      atualizarSumario();renderLista();
+      showToast('Programação cancelada — anomalia voltou para pendente.');
+    }catch(e){console.error(e);showToast('Erro ao cancelar programação.',true);}
+  };
+
+  // ── Modal programar individual ──────────────────────────────────────────────
+  window.openModalProgramar=async function(anomaliaId,tipo,postes){
+    programarId=anomaliaId;
+    const tipoLbl={poda:'✂ Poda',espacador:'⊕ Espaçador',ramal:'🏠 Ramal',mux:'🔄 MBX',fora:'⚠️ Fora Padrão',poste:'🪵 Sub. Poste',outros:'📋 Outros'}[tipo]||tipo;
+    document.getElementById('modalProgramarSub').textContent=`Tipo: ${tipoLbl} | Postes: ${postes||'—'}`;
+    pickerProg.reset();
+    document.getElementById('modalProgramar').classList.add('open');
+    const equipes=await fetchAll('usuarios',{filters:{perfil:'equipe'},order:{col:'nome'}});
+    pickerProg.load(equipes.map(u=>({id:u.id,nome:u.nome})));
+  };
+  window.closeModalProgramar=function(){
+    document.getElementById('modalProgramar').classList.remove('open');
+    pickerProg.reset();
+  };
+  window.confirmarProgramar=async function(){
+    const equipeId=pickerProg.getValue();
+    const equipeNome=pickerProg.getNome();
+    if(!equipeId)return showToast('Selecione uma equipe.',true);
+    const btn=document.getElementById('btnProgramarConfirmar');
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+    try{
+      await sb.from('anomalias').update({status:'programado',equipe_id:equipeId,equipe_nome:equipeNome,programado_em:new Date().toISOString()}).eq('id',programarId);
+      closeModalProgramar();showToast('Serviço programado!');await carregarAnomalias();
+    }catch{showToast('Erro ao programar.',true);}
+    finally{btn.disabled=false;btn.textContent='Programar';}
+  };
+
+  // ── Modal concluir ──────────────────────────────────────────────────────────
+  let concluirId=null,fotoConcluirFile=null;
+  window.openModalConcluir=async function(anomaliaId){
+    concluirId=anomaliaId;fotoConcluirFile=null;
+    document.getElementById('fotoPreviewConc').style.display='none';
+    document.getElementById('fotoPreviewConc').src='';
+    document.getElementById('obsConc').value='';
+    document.getElementById('btnCameraConc').classList.remove('selected');
+    document.getElementById('btnGaleriaConc').classList.remove('selected');
+    const{data:a}=await sb.from('anomalias').select('*').eq('id',anomaliaId).single();
+    const tipoLabel={poda:'✂ Poda',espacador:'⊕ Espaçador',ramal:'🏠 Ramal',mux:'🔄 MBX',fora:'⚠️ Fora Padrão',poste:'🪵 Sub. Poste',outros:'📋 Outros'}[a.tipo]||a.tipo;
+    document.getElementById('modalConcluirInfoGrid').innerHTML=`
+      <div class="modal-info-item full"><div class="info-label">Endereço</div><div class="info-val">${a.endereco||'—'}</div></div>
+      <div class="modal-info-item"><div class="info-label">Tipo</div><div class="info-val">${tipoLabel}</div></div>
+      <div class="modal-info-item"><div class="info-label">Quantidade</div><div class="info-val">${a.quantidade||'—'}</div></div>
+      <div class="modal-info-item"><div class="info-label">Data conclusão</div><div class="info-val">${new Date().toLocaleDateString('pt-BR')}</div></div>
+      <div class="modal-info-item"><div class="info-label">Postes</div><div class="info-val">${a.postes||'—'}</div></div>`;
+    const equipeWrap=document.getElementById('modalConcluirEquipeWrap');
+    if(currentPerfil==='admin'){
+      equipeWrap.style.display='block';
+      pickerConc.reset();
+      document.getElementById('modalConcluir').classList.add('open');
+      const equipes=await fetchAll('usuarios',{filters:{perfil:'equipe'},order:{col:'nome'}});
+      pickerConc.load(equipes.map(u=>({id:u.id,nome:u.nome})));
+      // pré-seleciona equipe já programada, se houver
+      if(a.equipe_id) pickerConc.setSelected(a.equipe_id);
+    } else {
+      equipeWrap.style.display='none';
+      document.getElementById('modalConcluir').classList.add('open');
+    }
+  };
+  window.closeModalConcluir=function(){
+    document.getElementById('modalConcluir').classList.remove('open');
+    concluirId=null;fotoConcluirFile=null;
+    pickerConc.reset();
+  };
+  window.abrirFotoConc=function(origem){
+    const input=document.createElement('input');input.type='file';input.accept='image/*';
+    if(origem==='camera')input.capture='environment';
+    input.onchange=e=>{
+      const file=e.target.files[0];if(!file)return;fotoConcluirFile=file;
+      const prev=document.getElementById('fotoPreviewConc');
+      prev.src=URL.createObjectURL(file);prev.style.display='block';
+      document.getElementById('btnCameraConc').classList.toggle('selected',origem==='camera');
+      document.getElementById('btnGaleriaConc').classList.toggle('selected',origem==='galeria');
+    };input.click();
+  };
+  window.confirmarConcluir=async function(){
+    if(!fotoConcluirFile)return showToast('Foto de conclusão é obrigatória.',true);
+    let equipeId=null,equipeNome=null;
+    if(currentPerfil==='admin'){
+      equipeId=pickerConc.getValue();
+      if(!equipeId)return showToast('Selecione a equipe executora.',true);
+      equipeNome=pickerConc.getNome();
+    } else {
+      equipeId=currentUser.uid;equipeNome=currentUser.nome||'—';
+    }
+    const btn=document.getElementById('btnConcluirConfirmar');
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Salvando...';
+    try{
+      const fd=new FormData();fd.append('file',fotoConcluirFile);fd.append('upload_preset','anomalias-stcmetro');
+      const res=await fetch('https://api.cloudinary.com/v1_1/ychqppqm/image/upload',{method:'POST',body:fd});
+      const json=await res.json();
+      const fotoUrl=json.secure_url?json.secure_url.replace('/upload/','/upload/w_1200,q_75,f_auto/'):null;
+      if(!fotoUrl)throw new Error('Falha no upload.');
+      const obs=document.getElementById('obsConc').value.trim();
+      const upd={status:'concluido',foto_concluido_url:fotoUrl,equipe_id:equipeId,equipe_nome:equipeNome,concluido_em:new Date().toISOString(),concluido_por:currentUser.uid};
+      if(obs)upd.observacao_conclusao=obs;
+      await sb.from('anomalias').update(upd).eq('id',concluirId);
+      closeModalConcluir();showToast('✓ Serviço concluído com sucesso!');await carregarAnomalias();
+    }catch(e){console.error(e);showToast('Erro ao concluir serviço.',true);}
+    finally{btn.disabled=false;btn.textContent='✓ Concluir';}
+  };
+
+  async function carregarBadgePendencias(){
+    const badge=document.getElementById('badgePendencias');
+    badge.style.display='none';
+    if(currentPerfil==='admin'){
+      const{count}=await sb.from('inspecoes').select('*',{count:'exact',head:true}).eq('status','pendente');
+      if(count>0){badge.textContent=count;badge.style.display='flex';}
+    } else if(currentPerfil==='fiscal'){
+      const{count}=await sb.from('inspecoes').select('*',{count:'exact',head:true}).eq('status','pendente').eq('fiscal_id',currentUser.uid);
+      if(count>0){badge.textContent=count;badge.style.display='flex';}
+    }
+  }
+
+  window.showToast=function(msg,isError=false){
+    const t=document.getElementById('toast');t.textContent=msg;
+    t.className='toast'+(isError?' error':'')+' show';
+    setTimeout(()=>t.classList.remove('show'),3000);
+  };
+
+  // ── Modo seleção ────────────────────────────────────────────────────────────
+  window.toggleModoSelecao=function(){
+    modoSelecao=!modoSelecao;
+    const btn=document.getElementById('btnModoSelecao');
+    const lbl=document.getElementById('btnModoSelecaoLbl');
+    if(btn){
+      btn.style.background=modoSelecao?'rgba(0,170,255,.22)':'rgba(0,170,255,.1)';
+      btn.style.borderColor=modoSelecao?'rgba(0,170,255,.6)':'rgba(0,170,255,.3)';
+    }
+    if(lbl)lbl.textContent=modoSelecao?'Cancelar':'Selecionar';
+    renderLista();
+  };
+
+  // ── Seleção múltipla ────────────────────────────────────────────────────────
+  function selecionadasDOM(){
+    // retorna os checkboxes marcados em ORDEM VISUAL (cima → baixo)
+    return [...document.querySelectorAll('.anom-check:checked')];
+  }
+
+  function atualizarBarraSelecao(checks){
+    const marcados=checks||selecionadasDOM();
+    const sel=marcados.map(c=>c.dataset.id);
+    const contador=document.getElementById('contadorSelecionadas');
+    if(contador)contador.textContent=`${sel.length} selecionada${sel.length!==1?'s':''}`;
+
+    // elegibilidade por ação
+    const comFoto       = marcados.filter(c=>c.dataset.temfoto==='1').length;
+    const naoConcluidas = marcados.filter(c=>c.dataset.status!=='concluido').length;
+    const programaveis  = marcados.filter(c=>c.dataset.status==='pendente'&&c.dataset.tipo!=='mux').length;
+    const programadas   = marcados.filter(c=>c.dataset.status==='programado').length;
+
+    const setBtn=(id,enabled)=>{
+      const b=document.getElementById(id);
+      if(!b)return;
+      b.disabled=!enabled;
+    };
+    setBtn('btnExportarFotos',    comFoto>0);
+    setBtn('btnConcluirLote',     naoConcluidas>0);
+    setBtn('btnProgramarLote',    programaveis>0);
+    setBtn('btnCancelarProgLote', programadas>0);
+
+    const checkAll=document.getElementById('checkTodas');
+    if(checkAll){
+      const total=document.querySelectorAll('.anom-check').length;
+      checkAll.checked=total>0&&sel.length===total;
+      checkAll.indeterminate=sel.length>0&&sel.length<total;
+    }
+  }
+  window.atualizarSelecao=function(){atualizarBarraSelecao();};
+  window.toggleSelecionarTodas=function(cb){
+    document.querySelectorAll('.anom-check').forEach(c=>c.checked=cb.checked);
+    atualizarBarraSelecao();
+  };
+
+  // ── Exportar fotos selecionadas (ZIP) ───────────────────────────────────────
+  async function carregarScript(src){
+    return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  }
+  function urlOriginal(url){
+    return (url||'')
+      .replace('/upload/w_400,q_65,f_auto/','/upload/')
+      .replace('/upload/w_1200,q_75,f_auto/','/upload/');
+  }
+  window.exportarFotosSelecionadas=async function(){
+    const ids=selecionadasDOM().map(c=>c.dataset.id);
+    if(!ids.length)return showToast('Nenhuma anomalia selecionada.',true);
+    const sel=ids.map(id=>todasAnomalias.find(a=>String(a.id)===id)).filter(Boolean);
+    const comFoto=sel.filter(a=>a.foto_url||a.foto_concluido_url);
+    if(!comFoto.length)return showToast('Nenhuma das selecionadas possui foto.',true);
+
+    const btn=document.getElementById('btnExportarFotos');
+    const txtOriginal=btn.innerHTML;
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Baixando...';
+
+    try{
+      if(!window.JSZip) await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+      const zip=new JSZip();
+      const usados={};
+      let ok=0,falhas=0;
+      for(const a of comFoto){
+        let base=`${(a.circuito_nome||a.circuito_id||'sem-circuito')}_${a.tipo||''}`.replace(/[^\w\-]+/g,'_');
+        usados[base]=(usados[base]||0)+1;
+        if(usados[base]>1)base+=`_${usados[base]}`;
+        for(const[suf,url]of[['',a.foto_url],['_concluido',a.foto_concluido_url]]){
+          if(!url)continue;
+          try{
+            const resp=await fetch(urlOriginal(url));
+            if(!resp.ok)throw new Error('HTTP '+resp.status);
+            zip.file(`${base}${suf}.jpg`,await resp.blob());
+            ok++;
+          }catch(e){console.warn('Falha foto',url,e);falhas++;}
+        }
+      }
+      if(ok===0)throw new Error('Nenhuma foto pôde ser baixada (verifique CORS/conexão).');
+      const blob=await zip.generateAsync({type:'blob'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`fotos_anomalias_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.zip`;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      showToast(`✓ ${ok} foto${ok!==1?'s':''} exportada${ok!==1?'s':''}${falhas?` (${falhas} falhou)`:''}.`);
+    }catch(e){
+      console.error(e);
+      showToast('Erro ao exportar fotos. '+(e.message||''),true);
+    }finally{
+      btn.disabled=false;btn.innerHTML=txtOriginal;
+    }
+  };
+
+  // ── Concluir em lote com fotos posicionais ──────────────────────────────────
+  let concLoteAnomalias=[]; // serviços selecionados, em ordem visual
+  let concLoteFotos=[];     // arquivos importados, reordenáveis
+
+  window.abrirConcluirLote=async function(){
+    const ids=selecionadasDOM().map(c=>c.dataset.id);
+    const sel=ids.map(id=>todasAnomalias.find(a=>String(a.id)===id)).filter(Boolean);
+    concLoteAnomalias=sel.filter(a=>a.status!=='concluido');
+    if(!concLoteAnomalias.length)return showToast('Selecione ao menos um serviço não concluído.',true);
+    concLoteFotos=[];
+
+    document.getElementById('concLoteSub').textContent=
+      `${concLoteAnomalias.length} serviço${concLoteAnomalias.length!==1?'s':''} — importe as fotos na mesma ordem (1ª foto → 1º serviço).`;
+    document.getElementById('btnPickFotosLoteLbl').textContent='Selecionar fotos';
+    document.getElementById('concLoteProgressWrap').style.display='none';
+    document.getElementById('btnConfirmarConcLote').disabled=true;
+    pickerConcLote.reset();
+    renderConcLotePairs();
+    document.getElementById('modalConcluirLote').classList.add('open');
+
+    const equipes=await fetchAll('usuarios',{filters:{perfil:'equipe'},order:{col:'nome'}});
+    pickerConcLote.load(equipes.map(u=>({id:u.id,nome:u.nome})));
+  };
+
+  window.fecharConcluirLote=function(){
+    document.getElementById('modalConcluirLote').classList.remove('open');
+    concLoteAnomalias=[];concLoteFotos=[];
+    pickerConcLote.reset();
+  };
+
+  window.pickFotosLote=function(){
+    const input=document.createElement('input');
+    input.type='file';input.accept='image/*';input.multiple=true;
+    input.onchange=e=>{
+      const files=[...e.target.files];
+      if(!files.length)return;
+      // ordena por nome para previsibilidade; usuário pode reordenar depois
+      files.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{numeric:true}));
+      concLoteFotos=files;
+      document.getElementById('btnPickFotosLoteLbl').textContent=`${files.length} foto${files.length!==1?'s':''} — trocar`;
+      renderConcLotePairs();
+    };
+    input.click();
+  };
+
+  function renderConcLotePairs(){
+    const cont=document.getElementById('concLotePairs');
+    const aviso=document.getElementById('concLoteAviso');
+    const nServ=concLoteAnomalias.length;
+    const nFoto=concLoteFotos.length;
+
+    // aviso de descompasso
+    if(nFoto===0){
+      aviso.style.display='none';
+    } else if(nFoto<nServ){
+      aviso.style.display='block';
+      aviso.textContent=`⚠ ${nFoto} foto(s) para ${nServ} serviço(s). Apenas os ${nFoto} primeiros serão concluídos.`;
+    } else if(nFoto>nServ){
+      aviso.style.display='block';
+      aviso.textContent=`⚠ ${nFoto} foto(s) para ${nServ} serviço(s). As ${nFoto-nServ} foto(s) extras serão ignoradas.`;
+    } else {
+      aviso.style.display='none';
+    }
+
+    // pareamento posicional
+    const pares=Math.max(nServ, nFoto);
+    let html='';
+    for(let i=0;i<nServ;i++){
+      const a=concLoteAnomalias[i];
+      const foto=concLoteFotos[i];
+      const thumb=foto
+        ?`<img class="pair-thumb" src="${URL.createObjectURL(foto)}" alt="foto ${i+1}"/>`
+        :`<div class="pair-thumb-empty" title="Sem foto para este serviço">✕</div>`;
+      const reorder=`<div class="pair-reorder">
+        <button onclick="moverFotoLote(${i},-1)" ${i===0||!nFoto?'disabled':''} title="Subir foto"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg></button>
+        <button onclick="moverFotoLote(${i},1)" ${i>=nFoto-1||!nFoto?'disabled':''} title="Descer foto"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></button>
+      </div>`;
+      html+=`<div class="pair-row">
+        <div class="pair-num">${i+1}</div>
+        <div class="pair-info">
+          <div class="pi-circ">${a.circuito_nome||a.circuito_id||'—'}</div>
+          <div class="pi-end">${a.endereco||'—'}</div>
+        </div>
+        ${nFoto?reorder:''}
+        ${thumb}
+      </div>`;
+    }
+    cont.innerHTML=html;
+
+    // habilita confirmar se há pelo menos 1 par válido
+    document.getElementById('btnConfirmarConcLote').disabled=!(nFoto>0&&nServ>0);
+  }
+
+  window.moverFotoLote=function(idx,dir){
+    const j=idx+dir;
+    if(j<0||j>=concLoteFotos.length)return;
+    const tmp=concLoteFotos[idx];
+    concLoteFotos[idx]=concLoteFotos[j];
+    concLoteFotos[j]=tmp;
+    renderConcLotePairs();
+  };
+
+  window.confirmarConcluirLote=async function(){
+    const equipeId=pickerConcLote.getValue();
+    const equipeNome=pickerConcLote.getNome();
+    if(!equipeId)return showToast('Selecione a equipe executora.',true);
+    const n=Math.min(concLoteAnomalias.length,concLoteFotos.length);
+    if(n===0)return showToast('Importe ao menos uma foto.',true);
+
+    const btn=document.getElementById('btnConfirmarConcLote');
+    btn.disabled=true;
+    const wrap=document.getElementById('concLoteProgressWrap');
+    const bar=document.getElementById('concLoteProgressBar');
+    const lbl=document.getElementById('concLoteProgressLabel');
+    wrap.style.display='block';
+
+    let ok=0,erros=0;
+    for(let i=0;i<n;i++){
+      bar.style.width=`${Math.round((i/n)*100)}%`;
+      lbl.textContent=`Enviando ${i+1}/${n}...`;
+      try{
+        const fd=new FormData();
+        fd.append('file',concLoteFotos[i]);
+        fd.append('upload_preset','anomalias-stcmetro');
+        const res=await fetch('https://api.cloudinary.com/v1_1/ychqppqm/image/upload',{method:'POST',body:fd});
+        const json=await res.json();
+        const fotoUrl=json.secure_url?json.secure_url.replace('/upload/','/upload/w_1200,q_75,f_auto/'):null;
+        if(!fotoUrl)throw new Error('upload falhou');
+        const{error}=await sb.from('anomalias').update({
+          status:'concluido',foto_concluido_url:fotoUrl,
+          equipe_id:equipeId,equipe_nome:equipeNome,
+          concluido_em:new Date().toISOString(),concluido_por:currentUser.uid
+        }).eq('id',concLoteAnomalias[i].id);
+        if(error)throw error;
+        ok++;
+      }catch(e){console.error('Falha conclusão lote',e);erros++;}
+    }
+    bar.style.width='100%';
+    lbl.textContent=`Concluído: ${ok} serviço(s)${erros?`, ${erros} erro(s)`:''}`;
+    showToast(`✓ ${ok} serviço${ok!==1?'s':''} concluído${ok!==1?'s':''}${erros?` (${erros} falhou)`:''}.`);
+    setTimeout(()=>{fecharConcluirLote();carregarAnomalias();},1300);
+  };
+
+  // ── Programar em lote ───────────────────────────────────────────────────────
+  window.abrirProgramarLote=async function(){
+    const ids=[...document.querySelectorAll('.anom-check:checked')].map(c=>c.dataset.id);
+    if(!ids.length)return;
+    const modal=document.getElementById('modalProgramarLote');
+    modal._ids=ids;
+    document.getElementById('loteSubtitulo').textContent=`${ids.length} anomalia${ids.length!==1?'s':''} selecionada${ids.length!==1?'s':''}`;
+    document.getElementById('loteProgressWrap').style.display='none';
+    document.getElementById('btnConfirmarLote').disabled=false;
+    pickerLote.reset();
+    modal.classList.add('open');
+    const equipes=await fetchAll('usuarios',{filters:{perfil:'equipe'},order:{col:'nome'}});
+    pickerLote.load(equipes.map(u=>({id:u.id,nome:u.nome})));
+  };
+  window.fecharProgramarLote=function(){
+    document.getElementById('modalProgramarLote').classList.remove('open');
+    pickerLote.reset();
+  };
+  window.confirmarProgramarLote=async function(){
+    const modal=document.getElementById('modalProgramarLote');
+    const ids=modal._ids||[];
+    const equipeId=pickerLote.getValue();
+    const equipeNome=pickerLote.getNome();
+    if(!equipeId)return showToast('Selecione uma equipe.',true);
+    document.getElementById('btnConfirmarLote').disabled=true;
+    const wrap=document.getElementById('loteProgressWrap');
+    const bar=document.getElementById('loteProgressBar');
+    const lbl=document.getElementById('loteProgressLabel');
+    wrap.style.display='block';
+    let ok=0,erros=0;
+    for(let i=0;i<ids.length;i++){
+      bar.style.width=`${Math.round(((i)/ids.length)*100)}%`;
+      lbl.textContent=`${i+1}/${ids.length}...`;
+      const{error}=await sb.from('anomalias').update({
+        status:'programado',equipe_id:equipeId,equipe_nome:equipeNome,
+        programado_em:new Date().toISOString()
+      }).eq('id',ids[i]);
+      if(error)erros++;else ok++;
+    }
+    bar.style.width='100%';
+    lbl.textContent=`Concluído: ${ok} programadas${erros?`, ${erros} erro(s)`:''}`;
+    showToast(`✓ ${ok} anomalia${ok!==1?'s':''} programada${ok!==1?'s':''} para ${equipeNome}`);
+    setTimeout(()=>{fecharProgramarLote();carregarAnomalias();},1200);
+  };
+
+  // ── Cancelar programação em lote ────────────────────────────────────────────
+  window.cancelarProgramacaoLote=async function(){
+    const ids=selecionadasDOM()
+      .filter(c=>c.dataset.status==='programado')
+      .map(c=>c.dataset.id);
+    if(!ids.length)return showToast('Selecione anomalias programadas.',true);
+    if(!confirm(`Cancelar a programação de ${ids.length} anomalia${ids.length!==1?'s':''}?\nElas voltarão para "Pendente".`))return;
+    let ok=0,erros=0;
+    for(const id of ids){
+      const{error}=await sb.from('anomalias').update({
+        status:'pendente',equipe_id:null,equipe_nome:null,programado_em:null
+      }).eq('id',id);
+      if(error)erros++;else ok++;
+    }
+    showToast(`✓ ${ok} programação${ok!==1?'ões':''} cancelada${ok!==1?'s':''}${erros?` (${erros} erro)`:''}.`);
+    await carregarAnomalias();
+  };
+
+  // ── Exportar Excel ──────────────────────────────────────────────────────────
+  window.exportarPendentes=async function(){
+    if(!todasAnomalias.length)return showToast('Nenhuma anomalia para exportar.',true);
+    if(!window.XLSX){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    const tipoLabel={poda:'Poda',espacador:'Espaçador',ramal:'Ramal',mux:'MBX',fora:'Fora do Padrão',poste:'Sub. Poste',outros:'Outros'};
+    const statusLabel={pendente:'Pendente',programado:'Programado',concluido:'Concluído'};
+    const rows=todasAnomalias.map(a=>{
+      const deco=(window._decoCache||[]).find(d=>d.equipamento===(a.circuito_nome||a.circuito_id));
+      const conjNome=deco?.conjunto||'—';
+      const conjInfo=conjNome!=='—'?((window._conjCache||[]).find(c=>c.nome?.toUpperCase()===conjNome.toUpperCase())||null):null;
+      const conjStatus=conjInfo?({ok:'Na Meta',transgressao:'Transgressão',critico:'Crítico'}[conjInfo.status]||'—'):'—';
+      const pctDec=conjInfo?`${parseFloat(conjInfo.pct_dec||0).toFixed(2)}%`:'—';
+      const ocs3m=_ocs3m(a.circuito_nome||a.circuito_id)||[];
+      const nc=_nivelCli(_clientesDe(a.circuito_nome||a.circuito_id));
+      const nd=_nivelDes(ocs3m);
+      const matriz=`${nc} - ${nd}`;
+      return{
+        'Circuito':a.circuito_nome||a.circuito_id||'—',
+        'Conjunto':conjNome,'Status Conjunto':conjStatus,'%DEC':pctDec,
+        'Matriz':matriz,
+        'Tipo':tipoLabel[a.tipo]||a.tipo||'—',
+        'Status':statusLabel[a.status]||a.status||'—',
+        'Endereço':a.endereco||'—','Entre Postes':a.postes||'—',
+        'Quantidade':a.quantidade||1,
+        'Medidor (Ramal)':a.ramal_medidor||'—','UC (Ramal)':a.ramal_uc||'—',
+        'Medidor (Fora)':a.fora_medidor||'—','UC (Fora)':a.fora_uc||'—',
+        'Obs. Irregularidade':a.fora_obs||'—','Observação':a.observacao||'—',
+        'MBX Circuito Todo':a.mux_circuito_todo?'Sim':'—',
+        'Fiscal':a.fiscal_nome||'—','Equipe':a.equipe_nome||'—',
+        'Registrado em':fmtDate(a.criado_em),'Concluído em':fmtDate(a.concluido_em),
+        'Lat':a.lat||'','Lng':a.lng||''
+      };
+    });
+    const ws=window.XLSX.utils.json_to_sheet(rows);
+    const wb=window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb,ws,'Anomalias');
+    ws['!cols']=Object.keys(rows[0]||{}).map(k=>({wch:Math.max(k.length,14)}));
+    window.XLSX.writeFile(wb,'anomalias_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.xlsx');
+    showToast(`✓ ${rows.length} anomalias exportadas para Excel.`);
+  };
+
+  // ── Matriz + Conjunto badges ─────────────────────────────────────────────────
+  function _nivelCli(n){return n>=85?1:n>=50?2:3;}
+  function _desarmesSemPTP(ocs){return(ocs||[]).filter(o=>!String(o.causa||'').toUpperCase().includes('PTP'));}
+  function _nivelDes(ocs){const n=_desarmesSemPTP(ocs).length;return n>=2?1:n===1?2:3;}
+
+  // Fonte de clientes idêntica à da aba Circuitos:
+  // 1º) tabela `circuitos` (valor real do circuito)
+  // 2º) fallback: `clts_media` do decômetro (média do xlsx)
+  function _clientesDe(nome){
+    if(!nome)return 0;
+    const circ=(window._circCache||[]).find(c=>c.nome===nome);
+    if(circ && circ.clientes!=null && circ.clientes!=='') return parseInt(circ.clientes)||0;
+    const deco=(window._decoCache||[]).find(d=>d.equipamento===nome);
+    return parseInt(deco?.clts_media||0)||0;
+  }
+  function _matrizCor(nc,nd){const s=nc+nd;return s<=2?{bg:'rgba(255,77,109,.1)',bd:'rgba(255,77,109,.35)',cl:'var(--eq-error)'}:s<=4?{bg:'rgba(255,179,0,.1)',bd:'rgba(255,179,0,.3)',cl:'var(--eq-warning)'}:{bg:'rgba(0,229,160,.08)',bd:'rgba(0,229,160,.25)',cl:'var(--eq-success)'};}
+  function _parseDA(str){if(!str)return null;const s=String(str).trim();if(s.includes('T')||s.includes('-'))return new Date(s);const[d,t]=s.split(' ');const[dd,mm,yy]=(d||'').split('/');return yy?new Date(`${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}T${t||'00:00:00'}`):null;}
+  function _ocs3m(nome){const all=(window._decoCache||[]).find(d=>d.equipamento===nome);if(!all)return null;const hoje=new Date();const fim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate(),23,59,59);const ini=new Date(hoje.getFullYear(),hoje.getMonth()-3,1,0,0,0);return(all.ocorrencias||[]).filter(o=>{const dt=_parseDA(o.inicio)||_parseDA(o.fim);return dt&&dt>=ini&&dt<=fim;});}
+
+  function anomMatrizBadge(circuitoNome){
+    const ocs3m=_ocs3m(circuitoNome);
+    const nc=_nivelCli(_clientesDe(circuitoNome));
+    const nd=_nivelDes(ocs3m||[]);
+    const{bg,bd,cl}=_matrizCor(nc,nd);
+    const semDeco=ocs3m===null;
+    return`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:${bg};border:1px solid ${bd};color:${cl}" title="Matriz de impacto${semDeco?' (sem decômetro)':''}">⊞ ${nc} - ${nd}</span>`;
+  }
+
+  function anomConjuntoBadge(circuitoNome){
+    const deco=(window._decoCache||[]).find(d=>d.equipamento===circuitoNome);
+    if(!deco||!deco.conjunto)return'';
+    const conj=deco.conjunto;
+    const info=(window._conjCache||[]).find(c=>c.nome&&c.nome.toUpperCase()===conj.toUpperCase())||null;
+    if(!info)return`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:600;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:var(--eq-gray)">📍 ${conj}</span>`;
+    const{pct_dec,meta,status,mes_ref,ano_ref}=info;
+    const cor=status==='critico'?{bg:'rgba(255,77,109,.12)',bd:'rgba(255,77,109,.4)',cl:'var(--eq-error)'}:status==='transgressao'?{bg:'rgba(255,179,0,.12)',bd:'rgba(255,179,0,.35)',cl:'var(--eq-warning)'}:{bg:'rgba(0,229,160,.08)',bd:'rgba(0,229,160,.25)',cl:'var(--eq-success)'};
+    const ico=status==='critico'?'🔴':status==='transgressao'?'🟡':'🟢';
+    const mesN=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][mes_ref||0]||'';
+    return`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;background:${cor.bg};border:1px solid ${cor.bd};color:${cor.cl}" title="Conjunto: ${conj} | Meta DEC: ${meta} | ${parseFloat(pct_dec||0).toFixed(2)}% | Ref: ${mesN}/${ano_ref||''}">${ico} ${conj} · ${parseFloat(pct_dec||0).toFixed(2)}%</span>`;
+  }
+
+  // ── Lightbox ─────────────────────────────────────────────────────────────────
+  function openLightbox(url){
+    const fullUrl=(url||'').replace('/upload/w_400,q_65,f_auto/','/upload/').replace('/upload/w_1200,q_75,f_auto/','/upload/');
+    document.getElementById('lightboxImg').src=fullUrl;
+    document.getElementById('lightbox').style.display='flex';
+    document.body.style.overflow='hidden';
+  }
+  window.openLightbox=openLightbox;
+  window.closeLightbox=function(){
+    document.getElementById('lightbox').style.display='none';
+    document.getElementById('lightboxImg').src='';
+    document.body.style.overflow='';
+  };
+  document.addEventListener('click',function(e){
+    const el=e.target.closest('.lb-trigger');
+    if(el){e.stopPropagation();openLightbox(el.dataset.full||el.src);}
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
+</script>
+</body>
+</html>

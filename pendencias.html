@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <title>Anomalias STCMETRO - Pendencias</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bd:#0a1628;--bm:#1a56c4;--cy:#00aaff;--pm:#7c3fc0;--wh:#f0f4ff;--gr:#8a9bbf;--er:#ff4d6d;--su:#00e5a0;--wa:#ffb300;--nh:64px;--th:56px}
+    html,body{height:100%;font-family:'Barlow',sans-serif;background:var(--bd);color:var(--wh);-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--th);background:rgba(10,22,40,.97);border-bottom:1px solid rgba(0,170,255,.15);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:10px}
+    .tlogo{display:flex;align-items:center;gap:8px}
+    .ticon{width:32px;height:32px;background:linear-gradient(135deg,var(--bm),var(--pm));border-radius:8px;display:flex;align-items:center;justify-content:center}
+    .ticon svg{width:16px;height:16px}
+    .tname{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;background:linear-gradient(90deg,#fff,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .tright{display:flex;align-items:center;gap:8px}
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--bm),var(--pm));display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700}
+    .btn-sair{background:none;border:1px solid rgba(255,77,109,.3);border-radius:7px;padding:6px 8px;color:var(--er);cursor:pointer;font-size:11px;font-weight:600}
+    .content{margin-top:var(--th);margin-bottom:var(--nh);padding:20px 16px}
+    .page-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;background:linear-gradient(90deg,#fff,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .page-sub{font-size:13px;color:var(--gr);margin-top:2px;margin-bottom:20px}
+    .filtros{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+    .filtros::-webkit-scrollbar{display:none}
+    .filtros.hidden{display:none}
+    .fbtn{padding:7px 14px;border-radius:20px;white-space:nowrap;font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--gr);transition:all .2s}
+    .fbtn.active{background:rgba(0,170,255,.12);border-color:rgba(0,170,255,.35);color:var(--cy)}
+    .sumrow{display:flex;gap:10px;margin-bottom:20px}
+    .sumcard{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+    .sumcard.p{border-color:rgba(255,179,0,.2)}.sumcard.c{border-color:rgba(0,229,160,.2)}
+    .sumval{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700}
+    .sumcard.t .sumval{color:var(--cy)}.sumcard.p .sumval{color:var(--wa)}.sumcard.c .sumval{color:var(--su)}
+    .sumlbl{font-size:11px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;text-align:center}
+    .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .sec-ttl{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.8px;color:var(--gr);text-transform:uppercase}
+    .pill{background:rgba(0,170,255,.1);border:1px solid rgba(0,170,255,.2);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--cy)}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:10px;transition:all .2s;position:relative;overflow:hidden}
+    .card.pendente{border-left:3px solid var(--wa)}
+    .card.concluido{border-left:3px solid var(--su);cursor:pointer}
+    .card.concluido:hover{border-color:rgba(0,229,160,.4);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,229,160,.1)}
+    .card.concluido .resumo-hint{position:absolute;bottom:8px;right:14px;font-size:10px;color:var(--su);opacity:.7;font-weight:600;letter-spacing:.4px;pointer-events:none}
+    .card.urgente::before{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 20px 20px 0;border-color:transparent var(--er) transparent transparent}
+    .ctop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .cnome{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;line-height:1.2;background:linear-gradient(90deg,#fff,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .spill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;flex-shrink:0;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+    .spill.pendente{background:rgba(255,179,0,.12);color:var(--wa);border:1px solid rgba(255,179,0,.25)}
+    .spill.concluido{background:rgba(0,229,160,.12);color:var(--su);border:1px solid rgba(0,229,160,.25)}
+    .spill.cancelado{background:rgba(138,155,191,.1);color:var(--gr);border:1px solid rgba(138,155,191,.2)}
+    .card.cancelado{border-left:3px solid var(--gr);opacity:.7}
+    .cmeta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+    .mi{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gr)}
+    .mi svg{width:13px;height:13px;flex-shrink:0}.mi span{color:var(--wh)}
+    .dbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+    .dbadge.ok{background:rgba(0,229,160,.1);color:var(--su)}.dbadge.alerta{background:rgba(255,179,0,.12);color:var(--wa)}.dbadge.critico{background:rgba(255,77,109,.12);color:var(--er)}
+    .cacts{display:flex;gap:8px;flex-wrap:wrap}
+    .bsm{padding:8px 14px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border:none;transition:opacity .2s,transform .15s;display:flex;align-items:center;gap:6px}
+    .bsm:active{transform:scale(.97)}.bsm:hover{opacity:.85}
+    .b-out{background:transparent;border:1px solid rgba(0,170,255,.3);color:var(--cy)}
+    .b-suc{background:linear-gradient(135deg,#1a8c4e,#0d6e3b);color:#fff}
+    .b-dan{background:transparent;border:1px solid rgba(255,77,109,.3);color:var(--er)}
+    .empty{text-align:center;padding:60px 20px;color:var(--gr)}.empty-icon{font-size:48px;margin-bottom:12px}.empty p{font-size:14px;line-height:1.6}
+    .mover{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+    .mover.open{opacity:1;pointer-events:all}
+    .modal{width:100%;max-width:520px;background:#0d1f3c;border:1px solid rgba(0,170,255,.2);border-radius:20px 20px 0 0;padding:24px 20px 36px;transform:translateY(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .mover.open .modal{transform:translateY(0)}
+    .mhdl{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px}
+    .mttl{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;background:linear-gradient(90deg,#fff,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .mttl.danger{background:none;-webkit-text-fill-color:var(--er)}
+    .mttl.resumo{background:none;-webkit-text-fill-color:var(--su)}
+    .msub{font-size:13px;color:var(--gr);margin-bottom:20px;line-height:1.5}
+    .mobs-lbl{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--gr);text-transform:uppercase;margin-bottom:6px;display:block}
+    .obs{width:100%;padding:12px 14px;min-height:80px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--wh);font-family:'Barlow',sans-serif;font-size:14px;resize:none;outline:none}
+    .obs:focus{border-color:var(--cy)}.obs::placeholder{color:rgba(138,155,191,.5)}
+    .chklist{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+    .chi{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s}
+    .chi.checked{background:rgba(0,229,160,.06);border-color:rgba(0,229,160,.2)}
+    .chbox{width:20px;height:20px;border-radius:6px;flex-shrink:0;border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .chi.checked .chbox{background:var(--su);border-color:var(--su)}
+    .chtxt{font-size:14px;font-weight:500}
+    .macts{display:flex;gap:10px;margin-top:16px}
+    .bcnl{flex:1;padding:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--gr);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+    .bsav{flex:2;padding:13px;background:linear-gradient(135deg,#1a8c4e,#0d6e3b);border:none;border-radius:10px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+    .bsav:disabled{opacity:.5;cursor:not-allowed}
+    /* ── tabela resumo ── */
+    .resumo-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+    .resumo-table th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gr);border-bottom:1px solid rgba(255,255,255,.08)}
+    .resumo-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top;line-height:1.4}
+    .resumo-table tr:last-child td{border-bottom:none}
+    .resumo-table td:first-child{color:var(--gr);font-size:12px;white-space:nowrap;width:40%}
+    .resumo-table td:last-child{color:var(--wh);font-weight:500}
+    .resumo-section{margin-bottom:14px}
+    .resumo-section-ttl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--cy);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(0,170,255,.15)}
+    .btn-copiar{width:100%;padding:12px;background:rgba(0,170,255,.1);border:1px solid rgba(0,170,255,.3);border-radius:10px;color:var(--cy);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-bottom:10px}
+    .btn-copiar:hover{background:rgba(0,170,255,.18)}
+    .btn-copiar.copiado{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--su)}
+    .anom-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .botnav{position:fixed;bottom:0;left:0;right:0;z-index:1000;height:var(--nh);background:rgba(10,22,40,.97);border-top:1px solid rgba(0,170,255,.15);backdrop-filter:blur(16px);display:flex;align-items:center}
+    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;min-height:44px;cursor:pointer;border:none;background:none;color:var(--gr);transition:color .2s;position:relative}
+    .ni.active{color:var(--cy)}.ni svg{width:22px;height:22px}
+    .nlbl{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+    .ni.active::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--cy);border-radius:0 0 4px 4px}
+    .ni.hidden{display:none}
+    .badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--er);color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;min-width:16px;text-align:center;display:none}
+    .sk{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:200% 100%;animation:sh 1.5s infinite;border-radius:14px}
+    @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .toast{position:fixed;bottom:calc(var(--nh) + 16px);left:50%;transform:translateX(-50%) translateY(20px);z-index:3000;background:rgba(10,22,40,.97);border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;border:1px solid rgba(0,229,160,.3);color:var(--su);opacity:0;transition:all .3s;white-space:normal;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.error{border-color:rgba(255,77,109,.3);color:var(--er)}
+    .spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tlogo">
+    <div class="ticon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <span class="tname">STCMETRO</span>
+  </div>
+  <div class="tright">
+    <div class="avatar" id="avatarEl">?</div>
+    <button class="btn-sair" onclick="doLogout()">Sair</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="page-title">Pendencias</div>
+  <div class="page-sub" id="pageSub">Carregando...</div>
+  <div class="filtros hidden" id="filtrosWrap">
+    <button class="fbtn active" onclick="setFiltro('todos',this)">Todos</button>
+    <button class="fbtn" onclick="setFiltro('pendente',this)">Pendentes</button>
+    <button class="fbtn" onclick="setFiltro('concluido',this)">Concluídos</button>
+    <button class="fbtn" onclick="setFiltro('cancelado',this)">Histórico</button>
+  </div>
+  <!-- Filtro de fiscal — só visível para admin -->
+  <div id="filtroFiscalWrap" style="display:none;margin-bottom:12px">
+    <select id="selectFiltroFiscal" onchange="setFiltroFiscal(this.value,this)"
+      style="width:100%;padding:9px 12px;background:#0d1f3c;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#f0f4ff;font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;outline:none">
+      <option value="todos" style="background:#0d1f3c">Todos os fiscais</option>
+    </select>
+  </div>
+  <div class="sumrow">
+    <div class="sumcard t"><div class="sumval" id="sTotal">-</div><div class="sumlbl">Total</div></div>
+    <div class="sumcard p"><div class="sumval" id="sPend">-</div><div class="sumlbl">Pendentes</div></div>
+    <div class="sumcard c"><div class="sumval" id="sConc">-</div><div class="sumlbl">Concluidos</div></div>
+  </div>
+  <div class="sec-hdr">
+    <div class="sec-ttl" id="secTtl">Inspecoes</div>
+    <div class="pill" id="cntPill">-</div>
+  </div>
+  <div id="lista">
+    <div class="sk" style="height:130px;margin-bottom:10px"></div>
+    <div class="sk" style="height:130px;margin-bottom:10px"></div>
+    <div class="sk" style="height:130px"></div>
+  </div>
+</div>
+
+<script>
+  // Guard de pré-render: esconde itens condicionais até a auth confirmar o perfil.
+  // setupUI() REMOVE este <style> e define a visibilidade real (display inline vence ID).
+  document.write('<style id="navInitStyle">#ni-anom,#ni-dash,#ni-circ,#ni-mbx{display:none}</style>');
+</script>
+
+<nav class="botnav">
+  <button class="ni" onclick="location.href='mapa.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+    <span class="nlbl">Mapa</span>
+  </button>
+  <button class="ni" id="ni-anom" onclick="location.href='anomalias.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="nlbl">Anomalias</span>
+  </button>
+  <button class="ni active" onclick="location.href='pendencias.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span class="nlbl">Pendencias</span>
+    <span class="badge" id="badgePend"></span>
+  </button>
+  <button class="ni" id="ni-dash" onclick="location.href='dashboard.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span class="nlbl">Dashboard</span>
+  </button>
+  <button class="ni" id="ni-mbx" onclick="location.href='mbx.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    <span class="nlbl">MBX</span>
+  </button>
+  <button class="ni" id="ni-circ" onclick="location.href='circuitos.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="nlbl">Circuitos</span>
+  </button>
+</nav>
+
+<!-- MODAL CONCLUIR -->
+<div class="mover" id="mConcluir">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mttl">Concluir Inspecao</div>
+    <div class="msub" id="mConcluirSub">Confirme os itens verificados.</div>
+    <div class="chklist">
+      <div class="chi" onclick="togCheck(this)"><div class="chbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="chtxt">Postes inspecionados visualmente</span></div>
+      <div class="chi" onclick="togCheck(this)"><div class="chbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="chtxt">Cabos e conexoes verificados</span></div>
+      <div class="chi" onclick="togCheck(this)"><div class="chbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="chtxt">Transformador avaliado</span></div>
+      <div class="chi" onclick="togCheck(this)"><div class="chbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="chtxt">Anomalias registradas (se houver)</span></div>
+    </div>
+    <label class="mobs-lbl">Observacoes (opcional)</label>
+    <textarea class="obs" id="obsConc" placeholder="Observacoes relevantes..."></textarea>
+    <div class="macts">
+      <button class="bcnl" onclick="fechaMConc()">Cancelar</button>
+      <button class="bsav" id="btnConc" onclick="confirmConc()">Concluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CANCELAR -->
+<div class="mover" id="mCancelar">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mttl danger">Cancelar Inspecao</div>
+    <div class="msub" id="mCancelarSub">Esta acao nao pode ser desfeita.</div>
+    <label class="mobs-lbl">Motivo do cancelamento</label>
+    <textarea class="obs" id="obsCanc" placeholder="Descreva o motivo..."></textarea>
+    <div class="macts">
+      <button class="bcnl" onclick="fechaMCanc()">Voltar</button>
+      <button class="bsav" id="btnCanc" onclick="confirmCanc()" style="background:linear-gradient(135deg,#c0392b,#922b21)">Cancelar inspecao</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA INSPEÇÃO -->
+<div class="mover" id="mNovaInsp">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mttl">Nova Inspecao</div>
+    <div class="msub" id="mNovaInspSub">Solicitar nova inspecao para este circuito.</div>
+    <label class="mobs-lbl">Selecione o fiscal</label>
+    <select class="obs" id="selectFiscalNova" style="padding:12px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--wh);font-family:inherit;font-size:14px;appearance:none;width:100%">
+      <option value="">-- Selecione um fiscal --</option>
+    </select>
+    <label class="mobs-lbl" style="margin-top:14px">Observacoes (opcional)</label>
+    <textarea class="obs" id="obsNovaInsp" placeholder="Instrucoes para o fiscal..."></textarea>
+    <div class="macts">
+      <button class="bcnl" onclick="fechaMNovaInsp()">Cancelar</button>
+      <button class="bsav" id="btnNovaInsp" onclick="confirmNovaInsp()">Solicitar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESUMO (card concluído) -->
+<div class="mover" id="mResumo">
+  <div class="modal" style="max-height:90vh">
+    <div class="mhdl"></div>
+    <div class="mttl resumo">Resumo da Inspeção</div>
+    <div class="msub" id="mResumoSub"></div>
+    <button class="btn-copiar" id="btnCopiarResumo" onclick="copiarResumo()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copiar resumo
+    </button>
+    <div id="mResumoBody"></div>
+    <div class="macts" style="margin-top:8px">
+      <button class="bcnl" onclick="document.getElementById('mResumo').classList.remove('open')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://evejimevrfxyzavuquis.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2ZWppbWV2cmZ4eXphdnVxdWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MjA5OTEsImV4cCI6MjEwNDA5Njk5MX0.AlOuF3z9CUCZ_54mt1c8h7UFGWn993onI80mllVGSXo';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function fetchAll(table, opts={}) {
+    const {select='*',filters={},order=null}=opts;
+    let results=[],offset=0,limit=1000;
+    while(true){
+      let q=sb.from(table).select(select).range(offset,offset+limit-1);
+      for(const[col,val]of Object.entries(filters)){
+        if(val===null)q=q.is(col,null);
+        else if(Array.isArray(val))q=q.in(col,val);
+        else q=q.eq(col,val);
+      }
+      if(order)q=q.order(order.col,{ascending:order.asc??true});
+      const{data,error}=await q;
+      if(error){console.error(`fetchAll(${table}):`,error);break;}
+      results=results.concat(data||[]);
+      if((data||[]).length<limit)break;
+      offset+=limit;
+    }
+    return results;
+  }
+
+  function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('pt-BR');}
+  function safe(v){return String(v||'').replace(/['"<>]/g,'');}
+
+  // ── Matriz de Impacto ──────────────────────────────────────────────────────
+  function nivelCli(n){return n>=85?1:n>=50?2:3;}
+  function desarmesSemPTP(ocs){return(ocs||[]).filter(o=>!String(o.causa||'').toUpperCase().includes('PTP'));}
+  function nivelDes(ocs){const n=desarmesSemPTP(ocs).length;return n>=2?1:n===1?2:3;}
+  function parseDataP(str){if(!str)return null;const s=String(str).trim();if(s.includes('T')||s.includes('-'))return new Date(s);const[d,t]=s.split(' ');const[dd,mm,yy]=(d||'').split('/');return yy?new Date(`${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}T${t||'00:00:00'}`):null;}
+  function ocs3mPend(nome){const all=(window._decometroCache||[]).find(d=>d.equipamento===nome);if(!all)return null;const hoje=new Date();const fim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate(),23,59,59);const ini=new Date(hoje.getFullYear(),hoje.getMonth()-3,1,0,0,0);return(all.ocorrencias||[]).filter(o=>{const dt=parseDataP(o.inicio)||parseDataP(o.fim);return dt&&dt>=ini&&dt<=fim;});}
+  function matrizCorP(nc,nd){
+    const s=nc+nd;
+    if(s<=2)return{color:'var(--er)',bg:'rgba(255,77,109,.1)',border:'rgba(255,77,109,.35)'};
+    if(s<=4)return{color:'var(--wa)',bg:'rgba(255,179,0,.1)',border:'rgba(255,179,0,.3)'};
+    return{color:'var(--su)',bg:'rgba(0,229,160,.08)',border:'rgba(0,229,160,.25)'};
+  }
+  function matrizBadge(circuitoNome, clientes){
+    const ocs3m=ocs3mPend(circuitoNome); // null=sem dados, []=sem desarmes na janela
+    const nc=nivelCli(clientes||0);
+    const nd=nivelDes(ocs3m||[]);
+    const{color,bg,border}=matrizCorP(nc,nd);
+    const semDeco=ocs3m===null;
+    return`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;background:${bg};border:1px solid ${border};color:${color}">⊞ ${nc} - ${nd}${semDeco?' <span style=opacity:.55>(sem deco)</span>':''}</span>`;
+  }
+  function conjuntoBadge(circuitoNome){
+    const deco=(window._decometroCache||[]).find(d=>d.equipamento===circuitoNome);
+    if(!deco||!deco.conjunto)return'';
+    const conj=deco.conjunto;
+    const info=(window._conjuntosCache||[]).find(c=>c.nome&&c.nome.toUpperCase()===conj.toUpperCase())||null;
+    if(!info)return`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:600;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:var(--gr)">📍 ${conj}</span>`;
+    const{pct_dec,meta,status,mes_ref,ano_ref}=info;
+    const cor=status==='critico'?{bg:'rgba(255,77,109,.12)',bd:'rgba(255,77,109,.4)',cl:'var(--er)'}
+              :status==='transgressao'?{bg:'rgba(255,179,0,.12)',bd:'rgba(255,179,0,.35)',cl:'var(--wa)'}
+              :{bg:'rgba(0,229,160,.08)',bd:'rgba(0,229,160,.25)',cl:'var(--su)'};
+    const ico=status==='critico'?'🔴':status==='transgressao'?'🟡':'🟢';
+    const mesN=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][mes_ref||0]||'';
+    return`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;background:${cor.bg};border:1px solid ${cor.bd};color:${cor.cl}" title="Meta DEC: ${meta} | ${parseFloat(pct_dec||0).toFixed(2)}% da meta | Ref: ${mesN}/${ano_ref||''}">${ico} ${conj} · ${parseFloat(pct_dec||0).toFixed(2)}%</span>`;
+  }
+
+  let cUser=null,cPerf=null,dados=[],filtro='todos',filtroFiscal='todos',idConc=null,idCanc=null,idNovaInspCircuito=null;
+
+  // ── init ──
+  (async()=>{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){location.href='index.html';return;}
+    const{data:u}=await sb.from('usuarios').select('*').eq('auth_id',session.user.id).single();
+    if(!u){await sb.auth.signOut();location.href='index.html';return;}
+    cUser={uid:u.id,nome:u.nome,perfil:u.perfil};
+    cPerf=u.perfil;
+    sessionStorage.setItem('userPerfil',cPerf);
+    document.getElementById('avatarEl').textContent=(u.nome||'?')[0].toUpperCase();
+    setupUI();
+    await carregar();
+  })();
+
+  window.doLogout=async()=>{await sb.auth.signOut();sessionStorage.clear();location.href='index.html';};
+
+  function setupUI(){
+    const sub=document.getElementById('pageSub');
+    const fw=document.getElementById('filtrosWrap');
+    // remove o guard de pré-render (seletor de ID com display:none vence)
+    const guard=document.getElementById('navInitStyle');
+    if(guard)guard.remove();
+
+    const na=document.getElementById('ni-anom');
+    const nd=document.getElementById('ni-dash');
+    const nc=document.getElementById('ni-circ');
+    const nm=document.getElementById('ni-mbx');
+
+    // visibilidade por perfil: admin vê tudo; fiscal vê anomalias; equipe não vê anomalias
+    const verAnom = cPerf==='admin' || cPerf==='fiscal';
+    const verAdmin = cPerf==='admin';
+    if(na)na.style.display=verAnom?'':'none';
+    if(nd)nd.style.display=verAdmin?'':'none';
+    if(nc)nc.style.display=verAdmin?'':'none';
+    if(nm)nm.style.display=verAdmin?'':'none';
+
+    if(cPerf==='admin'){
+      sub.textContent='Todas as inspecoes delegadas';
+      fw.classList.remove('hidden');
+    } else if(cPerf==='equipe'){
+      sub.textContent='Seus servicos programados';
+    } else {
+      sub.textContent='Suas inspecoes pendentes';
+    }
+  }
+
+  async function carregar(){
+    showSk();
+    try{
+      if(cPerf==='equipe'){
+        dados=await fetchAll('anomalias',{filters:{equipe_id:cUser.uid,status:'programado'},order:{col:'criado_em',asc:false}});
+        updSum(dados.length,dados.length,0);
+        renderEquipe();
+      } else {
+        const filters=cPerf==='admin'?{}:{fiscal_id:cUser.uid};
+        [dados, window._circuitosCache, window._decometroCache, window._conjuntosCache] = await Promise.all([
+          fetchAll('inspecoes',{filters,order:{col:'delegado_em',asc:false}}),
+          fetchAll('circuitos',{filters:{ativo:true}}),
+          fetchAll('decometro'),
+          fetchAll('conjuntos_dec'),
+        ]);
+        // carrega anomalias agrupadas por circuito
+        const todasAnom=await fetchAll('anomalias',{order:{col:'criado_em',asc:false}});
+        window._anomaliasPorCircuito={};
+        todasAnom.forEach(a=>{
+          const cid=a.circuito_id||'';
+          if(!window._anomaliasPorCircuito[cid])window._anomaliasPorCircuito[cid]=[];
+          window._anomaliasPorCircuito[cid].push(a);
+        });
+        updSum(dados.length,dados.filter(x=>x.status==='pendente').length,dados.filter(x=>x.status==='concluido').length);
+        renderFiltroFiscal();
+        renderLista();
+      }
+    }catch(e){console.error(e);showErr('Erro ao buscar dados. Tente recarregar.');}
+  }
+
+  function updSum(tot,pend,conc){
+    document.getElementById('sTotal').textContent=tot;
+    document.getElementById('sPend').textContent=pend;
+    document.getElementById('sConc').textContent=conc;
+  }
+
+  // ── render equipe ──
+  function renderEquipe(){
+    const el=document.getElementById('lista');
+    document.getElementById('cntPill').textContent=dados.length;
+    document.getElementById('secTtl').textContent='Servicos programados';
+    if(!dados.length){el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>Nenhum servico programado para voce.</p></div>';return;}
+    el.innerHTML=dados.map(a=>`
+      <div class="card pendente" onclick="goMapa('${safe(a.circuito_id)}','')">
+        <div class="ctop"><div class="cnome">${a.circuito_nome||a.circuito_id||'—'}</div>
+        <span class="spill pendente">${{poda:'Poda',mux:'MBX',espacador:'Espaçador',ramal:'Ramal',fora:'Fora Padrão',poste:'Sub. Poste',outros:'Outros'}[a.tipo]||a.tipo}</span></div>
+        <div class="cmeta">
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Endereco: <span>${a.endereco||'—'}</span></div>
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Programado: <span>${fmtDate(a.criado_em)}</span></div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── render fiscal/admin ──
+  function renderLista(){
+    const el=document.getElementById('lista');
+    let itens=dados.slice();
+    if(cPerf==='fiscal') itens=itens.filter(x=>x.status==='pendente');
+    else if(filtro!=='todos') itens=itens.filter(x=>x.status===filtro);
+    // filtro de fiscal (só admin)
+    if(cPerf==='admin'&&filtroFiscal!=='todos') itens=itens.filter(x=>(x.fiscal_id||'sem_fiscal')===filtroFiscal);
+    document.getElementById('cntPill').textContent=itens.length;
+    document.getElementById('secTtl').textContent=
+      cPerf==='fiscal'?'Inspecoes pendentes':
+      filtro==='pendente'?'Inspecoes pendentes':
+      filtro==='concluido'?'Inspecoes concluidas':
+      filtro==='cancelado'?'Histórico / Redelegadas':
+      'Todas as inspecoes';
+    if(!itens.length){
+      el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>'+(cPerf==='fiscal'?'Nenhuma inspecao pendente. Tudo em dia!':'Nenhuma inspecao encontrada.')+'</p></div>';
+      return;
+    }
+    el.innerHTML=itens.map(insp=>{
+      const delegado=insp.delegado_em?new Date(insp.delegado_em):null;
+      const dias=delegado?Math.floor((Date.now()-delegado.getTime())/86400000):null;
+      const dtStr=delegado?delegado.toLocaleDateString('pt-BR'):'—';
+      const urgente=dias!==null&&dias>7&&insp.status==='pendente';
+      const nome=insp.circuito_nome||insp.circuito_id||'—';
+      const cid=safe(insp.circuito_id);const iid=safe(insp.id);const iNome=safe(nome);
+
+      let dBadge='';
+      if(dias!==null&&insp.status==='pendente'){
+        const cls=dias<=3?'ok':dias<=7?'alerta':'critico';
+        dBadge='<span class="dbadge '+cls+'">'+(dias===0?'Hoje':dias+'d em aberto')+'</span>';
+      }
+
+      const fiscMeta=cPerf==='admin'?`<div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Fiscal: <span>${insp.fiscal_nome||'—'}</span></div>`:'';
+
+      // easy trafo + anel
+      let inspExtra='';
+      if(insp.easy_trafo!==null&&insp.easy_trafo!==undefined||insp.fechado_em_anel!==null&&insp.fechado_em_anel!==undefined){
+        inspExtra+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)"><div style="font-size:11px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Informações do transformador</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">';
+        if(insp.easy_trafo!==null&&insp.easy_trafo!==undefined){
+          const ok=insp.easy_trafo===true;
+          inspExtra+=`<span style="padding:3px 10px;border-radius:12px;background:${ok?'rgba(0,229,160,.12)':'rgba(255,77,109,.12)'};color:${ok?'var(--su)':'var(--er)'};border:1px solid ${ok?'rgba(0,229,160,.3)':'rgba(255,77,109,.3)'};font-size:12px;font-weight:600">${ok?'✓ Easy Trafo':'✗ Sem Easy Trafo'}</span>`;
+          if(ok&&insp.easy_trafo_foto_url)
+            inspExtra+=`<a href="${insp.easy_trafo_foto_url}" target="_blank" onclick="event.stopPropagation()" style="padding:3px 10px;border-radius:12px;background:rgba(0,170,255,.1);color:var(--cy);border:1px solid rgba(0,170,255,.25);font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Ver foto</a>`;
+        }
+        if(insp.fechado_em_anel!==null&&insp.fechado_em_anel!==undefined){
+          const ok=insp.fechado_em_anel===true;
+          inspExtra+=`<span style="padding:3px 10px;border-radius:12px;background:${ok?'rgba(0,229,160,.12)':'rgba(255,77,109,.12)'};color:${ok?'var(--su)':'var(--er)'};border:1px solid ${ok?'rgba(0,229,160,.3)':'rgba(255,77,109,.3)'};font-size:12px;font-weight:600">${ok?'✓ Fechado em anel':'✗ Não em anel'}</span>`;
+        }
+        inspExtra+='</div>';
+        if(insp.anel_observacao) inspExtra+=`<div style="font-size:11px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Observação — Anel</div><div style="font-size:12px;color:var(--wh);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 10px;line-height:1.5;margin-bottom:6px">${insp.anel_observacao}</div>`;
+        inspExtra+='</div>';
+      }
+
+      // clientes fora do padrão
+      const anomAll=(window._anomaliasPorCircuito||{})[insp.circuito_id]||[];
+      const foraList=anomAll.filter(a=>a.tipo==='fora');
+      if(foraList.length>0){
+        const foraId='fora-'+iid;
+        inspExtra+=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)">
+          <button onclick="event.stopPropagation();toggleForaList('${foraId}',this)" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;padding:0;margin-bottom:0">
+            <span style="font-size:11px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px">Clientes fora do padrão</span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <span style="padding:2px 8px;border-radius:10px;background:rgba(255,77,109,.15);color:var(--er);border:1px solid rgba(255,77,109,.3);font-size:11px;font-weight:700">${foraList.length}</span>
+              <svg id="chevron-${foraId}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+          <div id="${foraId}" style="display:none;margin-top:8px">
+            ${foraList.map(a=>`<div style="background:rgba(255,179,0,.05);border:1px solid rgba(255,179,0,.18);border-radius:8px;padding:9px 10px;margin-bottom:6px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+              <div style="flex:1;min-width:0">
+                ${a.fora_uc||a.fora_medidor?`<div style="font-size:12px;color:var(--wh);font-weight:600;margin-bottom:3px">${a.fora_uc?'UC '+a.fora_uc:''}${a.fora_medidor?'<span style="color:var(--gr);font-weight:400"> — '+a.fora_medidor+'</span>':''}</div>`:''}
+                ${a.fora_obs?`<div style="font-size:12px;color:var(--gr);line-height:1.4">${a.fora_obs}</div>`:''}
+              </div>
+              ${a.foto_url?`<a href="${a.foto_url}" target="_blank" onclick="event.stopPropagation()" title="Ver foto" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:rgba(0,170,255,.12);border:1px solid rgba(0,170,255,.25);display:flex;align-items:center;justify-content:center;text-decoration:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--cy)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></a>`:''}
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }
+
+      // info de conclusão
+      let concInfo='';
+      if(insp.status==='concluido'){
+        const anomInsp=(window._anomaliasPorCircuito||{})[insp.circuito_id]||[];
+        const nPoda=anomInsp.filter(a=>a.tipo==='poda').length;
+        const nEsp=anomInsp.filter(a=>a.tipo==='espacador').length;
+        const nMux=anomInsp.filter(a=>a.tipo==='mux').length;
+        const nRamal=anomInsp.filter(a=>a.tipo==='ramal').length;
+        const nFora=anomInsp.filter(a=>a.tipo==='fora').length;
+        const nPoste=anomInsp.filter(a=>a.tipo==='poste').length;
+        const nOutros=anomInsp.filter(a=>a.tipo==='outros').length;
+        const temAnom=nPoda+nEsp+nMux+nRamal+nFora+nPoste+nOutros>0;
+        concInfo='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)">'
+          +'<div class="mi" style="padding:0 0 6px 0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--su)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="color:var(--su);font-size:12px;font-weight:600">Concluido em '+fmtDate(insp.concluido_em)+'</span></div>';
+        if(temAnom){
+          concInfo+='<div style="font-size:11px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Anomalias encontradas</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+          if(nPoda) concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(255,179,0,.12);color:var(--wa);border:1px solid rgba(255,179,0,.25);font-size:12px;font-weight:600">${nPoda} poda${nPoda>1?'s':''}</span>`;
+          if(nEsp)  concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(0,170,255,.12);color:var(--cy);border:1px solid rgba(0,170,255,.25);font-size:12px;font-weight:600">${nEsp} espacador${nEsp>1?'es':''}</span>`;
+          if(nMux)  concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(124,63,192,.12);color:#b57bee;border:1px solid rgba(124,63,192,.25);font-size:12px;font-weight:600">${nMux} trecho MBX</span>`;
+          if(nRamal)concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(0,229,160,.12);color:var(--su);border:1px solid rgba(0,229,160,.25);font-size:12px;font-weight:600">${nRamal} ramal${nRamal>1?'s':''}</span>`;
+          if(nFora) concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(255,77,109,.12);color:var(--er);border:1px solid rgba(255,77,109,.25);font-size:12px;font-weight:600">${nFora} fora do padrão</span>`;
+          if(nPoste)concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(180,120,60,.12);color:#c8864a;border:1px solid rgba(180,120,60,.25);font-size:12px;font-weight:600">${nPoste} sub. poste${nPoste>1?'s':''}</span>`;
+          if(nOutros)concInfo+=`<span style="padding:3px 10px;border-radius:12px;background:rgba(100,100,100,.12);color:#aaa;border:1px solid rgba(100,100,100,.25);font-size:12px;font-weight:600">${nOutros} outros</span>`;
+          concInfo+='</div>';
+        } else {
+          concInfo+='<div class="mi" style="margin-bottom:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--su)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span>Nenhuma anomalia encontrada</span></div>';
+        }
+        if(insp.observacoes) concInfo+=`<div style="font-size:11px;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Observação do fiscal</div><div style="font-size:12px;color:var(--wh);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 10px;line-height:1.5;margin-bottom:6px">${insp.observacoes}</div>`;
+        concInfo+='</div>';
+      }
+
+      // botões
+      let btnAcao='';
+      if(insp.status==='pendente'){
+        btnAcao+=`<button class="bsm b-out" onclick="event.stopPropagation();goMapa('${cid}','${iid}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>Ver no mapa</button>`;
+        if(cPerf==='fiscal')
+          btnAcao+=`<button class="bsm b-suc" onclick="event.stopPropagation();abreMConc('${iid}','${iNome.replace(/'/g,"&#39;")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Concluir</button>`;
+        if(cPerf==='admin')
+          btnAcao+=`<button class="bsm b-dan" onclick="event.stopPropagation();abreMCanc('${iid}','${iNome.replace(/'/g,"&#39;")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cancelar</button>`;
+      } else if(insp.status==='concluido'){
+        btnAcao+=`<button class="bsm b-out" onclick="event.stopPropagation();goMapa('${cid}','${iid}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>Ver no mapa</button>`;
+        if(cPerf==='admin') btnAcao+=`<button class="bsm b-out" onclick="event.stopPropagation();abreNovaInsp('${cid}','${iNome.replace(/'/g,"&#39;")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova inspecao</button>`;
+      }
+
+      const clickHandler=insp.status==='concluido'?`onclick="abreResumo('${iid}')"`:'';
+      const statusLbl=insp.status==='pendente'?'Pendente':insp.status==='concluido'?'Concluido':'Redelegada';
+      // matriz de impacto + conjunto
+      const circ=(window._circuitosCache||[]).find(c=>c.id===insp.circuito_id||c.nome===insp.circuito_nome);
+      const mBadge=circ?matrizBadge(circ.nome,circ.clientes||0):'';
+      const cjBadge=circ?conjuntoBadge(circ.nome):'';
+      return `<div class="card ${insp.status}${urgente?' urgente':''}" ${clickHandler} style="${insp.status==='concluido'?'padding-bottom:28px':''}">
+        <div class="ctop">
+          <div>
+            <div class="cnome">${nome}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center">
+              ${dBadge?dBadge:''}
+              ${cjBadge}
+              ${mBadge}
+            </div>
+          </div>
+          <span class="spill ${insp.status}">${statusLbl}</span>
+        </div>
+        <div class="cmeta">
+          <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Delegado: <span>${dtStr}</span></div>
+          ${fiscMeta}
+        </div>
+        ${inspExtra}${concInfo}
+        ${btnAcao?`<div class="cacts" style="margin-top:10px">${btnAcao}</div>`:''}
+        ${insp.status==='concluido'?'<div class="resumo-hint">👁 clique para ver resumo</div>':''}
+      </div>`;
+    }).join('');
+  }
+
+  // ── modal resumo ──
+  window.abreResumo=function(inspId){
+    const insp=dados.find(d=>d.id===inspId);
+    if(!insp)return;
+    const anomInsp=(window._anomaliasPorCircuito||{})[insp.circuito_id]||[];
+    const nome=insp.circuito_nome||insp.circuito_id||'—';
+    document.getElementById('mResumoSub').textContent=nome+' — Concluído em '+fmtDate(insp.concluido_em);
+
+    // monta texto da tabela
+    const nPoda=anomInsp.filter(a=>a.tipo==='poda').length;
+    const nEsp=anomInsp.filter(a=>a.tipo==='espacador').length;
+    const nMux=anomInsp.filter(a=>a.tipo==='mux').length;
+    const nRamal=anomInsp.filter(a=>a.tipo==='ramal').length;
+    const nFora=anomInsp.filter(a=>a.tipo==='fora').length;
+    const nPoste=anomInsp.filter(a=>a.tipo==='poste').length;
+    const nOutros=anomInsp.filter(a=>a.tipo==='outros').length;
+    const foraList=anomInsp.filter(a=>a.tipo==='fora');
+
+    const row=(label,val)=>val&&val!=='—'?`<tr><td>${label}</td><td>${val}</td></tr>`:'';
+
+    // textos das anomalias agrupados por tipo
+    const tipoLabel2={poda:'Poda',espacador:'Espaçador',mux:'MBX',ramal:'Ramal',fora:'Fora do Padrão',poste:'Sub. Poste',outros:'Outros'};
+    const anomTextos=anomInsp.map(a=>{
+      const tipo=tipoLabel2[a.tipo]||a.tipo;
+      const texto=a.texto_os||'';
+      const obs=a.observacao||a.fora_obs||'';
+      return{tipo,texto,obs,postes:a.postes||'',quantidade:a.quantidade||1};
+    });
+
+    let html=`<div class="resumo-section">
+      <div class="resumo-section-ttl">Inspeção</div>
+      <table class="resumo-table">
+        ${row('Transformador',nome)}
+        ${row('Fiscal',insp.fiscal_nome)}
+        ${row('Delegado em',fmtDate(insp.delegado_em))}
+        ${row('Concluído em',fmtDate(insp.concluido_em))}
+        ${row('Easy Trafo',insp.easy_trafo===true?'✓ Sim':insp.easy_trafo===false?'✗ Não':'—')}
+        ${row('Fechado em anel',insp.fechado_em_anel===true?'✓ Sim':insp.fechado_em_anel===false?'✗ Não':'—')}
+        ${insp.anel_observacao?row('Obs. Anel',insp.anel_observacao):''}
+        ${insp.observacoes?row('Obs. Fiscal',insp.observacoes):''}
+      </table>
+    </div>`;
+
+    html+=`<div class="resumo-section">
+      <div class="resumo-section-ttl">Anomalias encontradas</div>
+      <table class="resumo-table">
+        ${row('Podas',nPoda>0?nPoda+' poda'+(nPoda>1?'s':''):'—')}
+        ${row('Espaçadores',nEsp>0?nEsp+' espaçador'+(nEsp>1?'es':''):'—')}
+        ${row('Trechos MBX',nMux>0?nMux+' trecho'+(nMux>1?'s':''):'—')}
+        ${row('Ramais',nRamal>0?nRamal+' ramal'+(nRamal>1?'s':''):'—')}
+        ${row('Fora do Padrão',nFora>0?nFora+' cliente'+(nFora>1?'s':''):'—')}
+        ${row('Sub. Postes',nPoste>0?nPoste+' poste'+(nPoste>1?'s':''):'—')}
+        ${row('Outros',nOutros>0?nOutros:'—')}
+      </table>
+    </div>`;
+
+    if(anomTextos.length>0){
+      html+=`<div class="resumo-section">
+        <div class="resumo-section-ttl">Textos das anomalias (${anomTextos.length})</div>
+        <table class="resumo-table">
+          ${anomTextos.map((a,i)=>`<tr>
+            <td style="color:var(--cy);white-space:nowrap;font-size:11px">${a.tipo}</td>
+            <td>${a.texto?`<div style="margin-bottom:${a.obs?'3px':'0'}">${a.texto}</div>`:''}${a.obs?`<div style="color:var(--gr);font-size:11px">Obs: ${a.obs}</div>`:''}</td>
+          </tr>`).join('')}
+        </table>
+      </div>`;
+    }
+
+    if(foraList.length>0){
+      html+=`<div class="resumo-section">
+        <div class="resumo-section-ttl">Clientes fora do padrão (${foraList.length})</div>
+        <table class="resumo-table">
+          <tr><th>UC</th><th>Medidor</th><th>Observação</th></tr>
+          ${foraList.map(a=>`<tr><td>${a.fora_uc||'—'}</td><td>${a.fora_medidor||'—'}</td><td>${a.fora_obs||'—'}</td></tr>`).join('')}
+        </table>
+      </div>`;
+    }
+
+    document.getElementById('mResumoBody').innerHTML=html;
+    // guarda texto plano para copiar
+    window._resumoTexto=montarTextoResumo(insp,anomInsp,nome,nPoda,nEsp,nMux,nRamal,nFora,nPoste,nOutros,foraList);
+    const btn=document.getElementById('btnCopiarResumo');
+    btn.classList.remove('copiado');
+    btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar resumo';
+    document.getElementById('mResumo').classList.add('open');
+  };
+
+  function montarTextoResumo(insp,anomInsp,nome,nPoda,nEsp,nMux,nRamal,nFora,nPoste,nOutros,foraList){
+    let txt='';
+    txt+='=== RESUMO DE INSPEÇÃO ===\n';
+    txt+=`Transformador: ${nome}\n`;
+    txt+=`Fiscal: ${insp.fiscal_nome||'—'}\n`;
+    txt+=`Delegado em: ${fmtDate(insp.delegado_em)}\n`;
+    txt+=`Concluído em: ${fmtDate(insp.concluido_em)}\n`;
+    txt+=`Easy Trafo: ${insp.easy_trafo===true?'Sim':insp.easy_trafo===false?'Não':'—'}\n`;
+    txt+=`Fechado em anel: ${insp.fechado_em_anel===true?'Sim':insp.fechado_em_anel===false?'Não':'—'}\n`;
+    if(insp.anel_observacao) txt+=`Obs. Anel: ${insp.anel_observacao}\n`;
+    if(insp.observacoes) txt+=`Obs. Fiscal: ${insp.observacoes}\n`;
+    txt+='\n=== ANOMALIAS ===\n';
+    if(nPoda)   txt+=`Podas: ${nPoda}\n`;
+    if(nEsp)    txt+=`Espaçadores: ${nEsp}\n`;
+    if(nMux)    txt+=`Trechos MBX: ${nMux}\n`;
+    if(nRamal)  txt+=`Ramais: ${nRamal}\n`;
+    if(nFora)   txt+=`Fora do Padrão: ${nFora}\n`;
+    if(nPoste)  txt+=`Sub. Postes: ${nPoste}\n`;
+    if(nOutros) txt+=`Outros: ${nOutros}\n`;
+    if(!nPoda&&!nEsp&&!nMux&&!nRamal&&!nFora&&!nPoste&&!nOutros) txt+='Nenhuma anomalia encontrada\n';
+    if(foraList.length>0){
+      txt+='\n=== CLIENTES FORA DO PADRÃO ===\n';
+      foraList.forEach((a,i)=>{
+        txt+=`${i+1}. UC: ${a.fora_uc||'—'} | Medidor: ${a.fora_medidor||'—'} | Obs: ${a.fora_obs||'—'}\n`;
+      });
+    }
+    // textos das anomalias
+    const anomAll2=anomInsp.filter(a=>a.texto_os||a.observacao||a.fora_obs);
+    if(anomAll2.length>0){
+      txt+='\n=== TEXTOS DAS ANOMALIAS ===\n';
+      anomAll2.forEach((a,i)=>{
+        const tipoL={poda:'Poda',espacador:'Espaçador',mux:'MBX',ramal:'Ramal',fora:'Fora do Padrão',poste:'Sub. Poste',outros:'Outros'}[a.tipo]||a.tipo;
+        if(a.texto_os) txt+=`${tipoL}: ${a.texto_os}\n`;
+        if(a.observacao||a.fora_obs) txt+=`  Obs: ${a.observacao||a.fora_obs}\n`;
+      });
+    }
+    return txt;
+  }
+
+  window.copiarResumo=function(){
+    if(!window._resumoTexto)return;
+    navigator.clipboard.writeText(window._resumoTexto).then(()=>{
+      const btn=document.getElementById('btnCopiarResumo');
+      btn.classList.add('copiado');
+      btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copiado!';
+      showToast('Resumo copiado!');
+      setTimeout(()=>{btn.classList.remove('copiado');btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar resumo';},3000);
+    }).catch(()=>showToast('Erro ao copiar.',true));
+  };
+
+  window.setFiltro=function(f,btn){
+    filtro=f;
+    filtroFiscal='todos'; // reset fiscal ao mudar status
+    document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderFiltroFiscal();
+    renderLista();
+  };
+
+  window.setFiltroFiscal=function(fid){
+    filtroFiscal=fid;
+    renderLista();
+  };
+
+  function renderFiltroFiscal(){
+    const wrap=document.getElementById('filtroFiscalWrap');
+    const sel=document.getElementById('selectFiltroFiscal');
+    if(!wrap||!sel||cPerf!=='admin'){return;}
+
+    // pega lista filtrada pelo status atual
+    let base=dados.slice();
+    if(filtro==='pendente')base=base.filter(x=>x.status==='pendente');
+    else if(filtro==='concluido')base=base.filter(x=>x.status==='concluido');
+    else if(filtro==='cancelado')base=base.filter(x=>x.status==='cancelado');
+
+    // agrupa por fiscal
+    const mapa={};
+    base.forEach(x=>{
+      const fid=x.fiscal_id||'sem_fiscal';
+      const fnome=x.fiscal_nome||'Sem fiscal';
+      if(!mapa[fid])mapa[fid]={id:fid,nome:fnome,count:0};
+      mapa[fid].count++;
+    });
+    const fiscais=Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome));
+
+    if(!fiscais.length){wrap.style.display='none';return;}
+    wrap.style.display='block';
+
+    const totalCount=base.length;
+    const prev=filtroFiscal;
+    sel.innerHTML=`<option value="todos" style="background:#0d1f3c">Todos os fiscais (${totalCount})</option>`
+      +fiscais.map(f=>`<option value="${f.id}" style="background:#0d1f3c">${f.nome} (${f.count})</option>`).join('');
+    // restaura seleção anterior se ainda existe
+    if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
+    else { sel.value='todos'; filtroFiscal='todos'; }
+  }
+
+  window.toggleForaList=function(id,btn){
+    const el=document.getElementById(id);
+    const ch=document.getElementById('chevron-'+id);
+    const vis=el.style.display==='block';
+    el.style.display=vis?'none':'block';
+    if(ch)ch.style.transform=vis?'':'rotate(180deg)';
+  };
+
+  window.goMapa=function(cid,iid){
+    if(cid)sessionStorage.setItem('circuitoSelecionado',cid);
+    if(iid)sessionStorage.setItem('inspecaoAtiva',iid);
+    sessionStorage.setItem('mapaOrigem','pendencias');
+    location.href='mapa.html';
+  };
+  // alias para botão inline
+  window.goMapaBtn=function(el){goMapa(el.dataset.id,'');};
+
+  // ── modal concluir ──
+  window.abreMConc=function(id,nome){
+    idConc=id;
+    document.getElementById('mConcluirSub').textContent='Circuito: '+nome;
+    document.querySelectorAll('.chi').forEach(el=>el.classList.remove('checked'));
+    document.getElementById('obsConc').value='';
+    document.getElementById('mConcluir').classList.add('open');
+  };
+  window.fechaMConc=function(){document.getElementById('mConcluir').classList.remove('open');};
+  window.togCheck=function(el){el.classList.toggle('checked');};
+  window.confirmConc=async function(){
+    const checks=document.querySelectorAll('.chi');
+    if([...checks].filter(c=>c.classList.contains('checked')).length<checks.length){
+      showToast('Marque todos os itens.',true,5000);return;
+    }
+
+    // ── valida Easy Trafo e Anel (obrigatórios) ──
+    const{data:insp}=await sb.from('inspecoes').select('easy_trafo,fechado_em_anel').eq('id',idConc).single();
+    if(!insp){showToast('Erro ao verificar inspeção.',true,5000);return;}
+    const faltando=[];
+    if(insp.easy_trafo===null||insp.easy_trafo===undefined) faltando.push('Easy Trafo');
+    if(insp.fechado_em_anel===null||insp.fechado_em_anel===undefined) faltando.push('Fechado em Anel');
+    if(faltando.length>0){
+      showToast(`⚠ Não é possível concluir: preencha ${faltando.join(' e ')} no mapa antes de encerrar.`,true,5000);
+      return;
+    }
+
+    const obs=document.getElementById('obsConc').value.trim();
+    const btn=document.getElementById('btnConc');
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    try{
+      await sb.from('inspecoes').update({status:'concluido',observacoes:obs,concluido_em:new Date().toISOString(),fiscal_id:cUser.uid,fiscal_nome:cUser.nome}).eq('id',idConc);
+      fechaMConc();showToast('Inspecao concluida!');await carregar();
+    }catch(e){showToast('Erro ao concluir.',true);}
+    finally{btn.disabled=false;btn.textContent='Concluir';}
+  };
+
+  // ── modal cancelar ──
+  window.abreMCanc=function(id,nome){
+    idCanc=id;
+    document.getElementById('mCancelarSub').textContent='Circuito: '+nome;
+    document.getElementById('obsCanc').value='';
+    document.getElementById('mCancelar').classList.add('open');
+  };
+  window.fechaMCanc=function(){document.getElementById('mCancelar').classList.remove('open');};
+  window.confirmCanc=async function(){
+    const motivo=document.getElementById('obsCanc').value.trim();
+    if(!motivo){showToast('Informe o motivo.',true);return;}
+    const btn=document.getElementById('btnCanc');
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    try{
+      await sb.from('inspecoes').delete().eq('id',idCanc);
+      fechaMCanc();showToast('Inspecao cancelada.');await carregar();
+    }catch(e){showToast('Erro ao cancelar.',true);}
+    finally{btn.disabled=false;btn.textContent='Cancelar inspecao';}
+  };
+
+  // ── modal nova inspeção ──
+  window.abreNovaInsp=async function(circuitoId,circuitoNome){
+    idNovaInspCircuito=circuitoId;
+    document.getElementById('mNovaInspSub').textContent='Solicitar nova inspecao: '+circuitoNome;
+    document.getElementById('obsNovaInsp').value='';
+    const sel=document.getElementById('selectFiscalNova');
+    sel.innerHTML='<option value="">Carregando...</option>';
+    document.getElementById('mNovaInsp').classList.add('open');
+    const fiscais=await fetchAll('usuarios',{filters:{perfil:'fiscal'},order:{col:'nome'}});
+    sel.innerHTML='<option value="">-- Selecione um fiscal --</option>';
+    fiscais.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nome;sel.appendChild(o);});
+  };
+  window.fechaMNovaInsp=function(){document.getElementById('mNovaInsp').classList.remove('open');};
+  window.confirmNovaInsp=async function(){
+    const fiscalId=document.getElementById('selectFiscalNova').value;
+    if(!fiscalId){showToast('Selecione um fiscal.',true);return;}
+    const obs=document.getElementById('obsNovaInsp').value.trim();
+    const btn=document.getElementById('btnNovaInsp');
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    try{
+      const{data:fiscal}=await sb.from('usuarios').select('nome').eq('id',fiscalId).single();
+      const{data:circ}=await sb.from('circuitos').select('nome').eq('id',idNovaInspCircuito).single();
+      await sb.from('inspecoes').insert({
+        circuito_id:idNovaInspCircuito,circuito_nome:circ?.nome||idNovaInspCircuito,
+        fiscal_id:fiscalId,fiscal_nome:fiscal?.nome||'—',
+        status:'pendente',observacoes:obs,
+        delegado_em:new Date().toISOString(),admin_id:cUser.uid
+      });
+      fechaMNovaInsp();showToast('Nova inspecao solicitada!');await carregar();
+    }catch(e){console.error(e);showToast('Erro ao solicitar.',true);}
+    finally{btn.disabled=false;btn.textContent='Solicitar';}
+  };
+
+  // ── helpers ──
+  function showSk(){document.getElementById('lista').innerHTML='<div class="sk" style="height:130px;margin-bottom:10px"></div><div class="sk" style="height:130px;margin-bottom:10px"></div><div class="sk" style="height:130px"></div>';}
+  function showErr(msg){document.getElementById('lista').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>'+msg+'</p></div>';}
+  window.showToast=function(msg,isErr,duration=3000){
+    const t=document.getElementById('toast');t.textContent=msg;
+    t.className='toast'+(isErr?' error':'')+' show';
+    setTimeout(()=>t.classList.remove('show'),duration);
+  };
+</script>
+</body>
+</html>
