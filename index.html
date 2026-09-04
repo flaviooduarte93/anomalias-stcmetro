@@ -296,7 +296,7 @@
       });
       if (error) throw error;
       const { error: err2 } = await sb.from('usuarios').insert({
-        auth_id: data.user.id, nome, perfil,
+        id: data.user.id, auth_id: data.user.id, nome, perfil,
         email: toEmail(username), username,
         criado_em: new Date().toISOString()
       });
