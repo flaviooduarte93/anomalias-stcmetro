@@ -723,6 +723,11 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Só com pendência <span id="cntFiltroPendencia" style="opacity:.6;font-weight:400"></span>
       </button>
+      <button id="btnFiltroAcionavel" onclick="toggleFiltroAcionavel()" title="Mostrar somente equipamentos com desarme por causa acionável (poda/vegetação/objeto na rede)"
+        style="display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;
+               border:1px solid rgba(46,204,113,.4);background:rgba(46,204,113,.07);color:#2ecc71;transition:all .2s">
+        🌳 Causa acionável <span id="cntFiltroAcionavel" style="opacity:.6;font-weight:400"></span>
+      </button>
     </div>
     <div id="mMatrizGeralBody"></div>
     <div class="modal-actions" style="margin-top:16px">
@@ -823,7 +828,10 @@
   }
 
   // ── carregar todos os dados ──
-  function equipValido(nome){ return /^[A-Za-z]{2}/.test(nome) && String(nome).substring(2,4)==='11'; }
+  // METRO: o filtro de transformador (Abrangência='TF' + clientes>=2) é aplicado no
+  // UPLOAD do decômetro. Aqui aceitamos qualquer equipamento já gravado no banco
+  // (2 letras + ao menos 4 chars), pois os nomes da Metro variam (11, 21, 31...).
+  function equipValido(nome){ return /^[A-Za-z]{2}/.test(String(nome)) && String(nome).length>=4; }
 
   async function carregarCircuitos(){
     const[decoAll,circAll,anoAll,inspAll]=await Promise.all([
@@ -1319,6 +1327,9 @@
         const iConj=h.findIndex(c=>_normC(c).includes('CONJUNTO')&&_normC(c).includes('GEOGRAF'));
         // Ponto Elétrico — equipamento vem antes do " - " nessa coluna
         const iPonto=h.findIndex(c=>_normC(c).includes('PONTO')&&_normC(c).includes('ELETR'));
+        // METRO: critério de transformador por Abrangência='TF' e clientes >= 2
+        const iAbr=h.findIndex(c=>_normC(c).includes('ABRANG'));
+        const iCliDen=h.findIndex(c=>_normC(c).includes('CLIENTES')&&_normC(c).includes('DENOMINAD'));
         if([iNum,iIni,iFim,iChi].some(x=>x<0)||iPonto<0){showToast('Colunas obrigatórias não encontradas (verifique "Ponto Elétrico").',true);return;}
         onProgress?.(45,'Agrupando equipamentos…');
         const ocorsPorEquip={};
@@ -1329,11 +1340,20 @@
           // extrai equipamento da coluna Ponto Elétrico: parte antes do " - "
           const pontoRaw=String(r[iPonto]||'').trim();
           const equip=pontoRaw.includes(' - ')?pontoRaw.split(' - ')[0].trim():pontoRaw;
-          // válido: 2 primeiros chars = letras, chars 3-4 (índices 2-3) = '11'
           if(!equip||equip==='---')continue;
           if(equip.length<4)continue;
           if(!/^[A-Za-z]{2}/.test(equip))continue;
-          if(equip.substring(2,4)!=='11')continue;
+          // METRO: transformador = Abrangência 'TF'. Se a coluna não existir, mantém o critério antigo ('11').
+          if(iAbr>=0){
+            if(String(r[iAbr]||'').trim().toUpperCase()!=='TF')continue;
+          } else if(equip.substring(2,4)!=='11'){
+            continue;
+          }
+          // METRO: considera apenas equipamentos com clientes >= 2
+          if(iCliDen>=0){
+            const cliDen=parseInt(r[iCliDen])||0;
+            if(cliDen<2)continue;
+          }
           // captura Clts Af Max para média
           if(iCltsMax>=0){
             const clts=parseInt(r[iCltsMax])||0;
@@ -1537,6 +1557,25 @@
   // Nível desarmes (desconsiderando causas com "PTP"): >=2 → 1, 1 → 2, 0 → 3
   function desarmesSemPTP(ocs){ return (ocs||[]).filter(o=>!String(o.causa||'').toUpperCase().includes('PTP')); }
   function nivelDesarmes(ocs){ const n=desarmesSemPTP(ocs).length; return n>=2?1:n===1?2:3; }
+
+  // ── Causa acionável por poda/limpeza de faixa (o que o app de anomalias ataca) ──
+  // Baseado nas causas reais do decômetro: árvore, objeto estranho, pipa, vegetação,
+  // vendaval (frequentemente indica poda/espaçador faltando no vão).
+  function _causaAcionavel(causa){
+    const c=String(causa||'').toUpperCase();
+    return c.includes('ARVORE')||c.includes('ÁRVORE')||c.includes('VEGETA')||
+           c.includes('GALHO')||c.includes('PIPA')||c.includes('OBJETO ESTRANHO')||
+           c.includes('VENDAVAL');
+  }
+  // métricas agregadas de um conjunto de ocorrências (sem PTP)
+  function _metricasOcs(ocsSemPTP){
+    let chi=0, acionaveis=0;
+    (ocsSemPTP||[]).forEach(o=>{
+      chi += parseFloat(o.chi||0)||0;
+      if(_causaAcionavel(o.causa)) acionaveis++;
+    });
+    return { chiTotal: Math.round(chi*100)/100, desarmes: (ocsSemPTP||[]).length, acionaveis };
+  }
   function matrizLabel(nc,nd){ return`${nc} - ${nd}`; }
   function matrizCor(nc,nd){
     const sum=nc+nd;
@@ -1674,7 +1713,10 @@
       const circId=circ?circ.id:null;
       const temInspecao=circId?!!inspecoesCache[circId]:false;
       const pendencias=circId?(anomaliasCache[circId]||0):0;
-      return{nome,clientes,nc,nd,color,lbl,ocsSemPTP,fonte,conjunto,conjInfo,diasRestantes,saidaJanela,circId,temInspecao,pendencias};
+      // métricas ricas: CHI acumulado, nº real de desarmes, desarmes acionáveis (poda)
+      const met=_metricasOcs(ocsSemPTP);
+      return{nome,clientes,nc,nd,color,lbl,ocsSemPTP,fonte,conjunto,conjInfo,diasRestantes,saidaJanela,circId,temInspecao,pendencias,
+             chiTotal:met.chiTotal,desarmesReais:met.desarmes,acionaveis:met.acionaveis};
     }).sort((a,b)=>{
       const ka=matrizLabel(a.nc,a.nd), kb=matrizLabel(b.nc,b.nd);
       return ordemFixaR.indexOf(ka)-ordemFixaR.indexOf(kb);
@@ -1710,6 +1752,7 @@
     _matrizGeralFiltro='todas';
     _matrizGeralBusca='';
     _matrizGeralSoPendencia=false;
+    _matrizGeralSoAcionavel=false;
     const inpBusca=document.getElementById('buscaMatrizGeral');
     if(inpBusca)inpBusca.value='';
     const clearBusca=document.getElementById('buscaMatrizGeralClear');
@@ -1719,6 +1762,12 @@
       btnPend.style.background='rgba(255,179,0,.06)';
       btnPend.style.borderColor='rgba(255,179,0,.35)';
       btnPend.style.outline='none';
+    }
+    const btnAcion=document.getElementById('btnFiltroAcionavel');
+    if(btnAcion){
+      btnAcion.style.background='rgba(46,204,113,.07)';
+      btnAcion.style.borderColor='rgba(46,204,113,.4)';
+      btnAcion.style.outline='none';
     }
     atualizarContadorPendencia();
     document.querySelectorAll('#filtrosMatrizGeral button').forEach(b=>b.style.outline='none');
@@ -1736,7 +1785,8 @@
       let va,vb;
       if(ord.col==='equipamento'){va=a.nome;vb=b.nome;}
       else if(ord.col==='clientes'){va=a.clientes||0;vb=b.clientes||0;}
-      else if(ord.col==='desarmes'){va=a.ocsSemPTP.length;vb=b.ocsSemPTP.length;}
+      else if(ord.col==='desarmes'){va=a.desarmesReais||0;vb=b.desarmesReais||0;}
+      else if(ord.col==='chi'){va=a.chiTotal||0;vb=b.chiTotal||0;}
       else if(ord.col==='matriz'){
         const ordemFixaM=['1 - 1','1 - 2','1 - 3','2 - 1','2 - 2','2 - 3','3 - 1','3 - 2','3 - 3'];
         va=ordemFixaM.indexOf(matrizLabel(a.nc,a.nd));vb=ordemFixaM.indexOf(matrizLabel(b.nc,b.nd));
@@ -1806,17 +1856,18 @@
         <td style="${td};text-align:center;color:var(--eq-gray)">${r.nc}</td>
         <td style="${td};text-align:center">
           <span style="cursor:pointer;color:var(--eq-cyan);text-decoration:underline" onclick="event.stopPropagation();toggleDesarmesDeco('deco-${r.nome.replace(/[^a-z0-9]/gi,'_')}')">
-            ${r.ocsSemPTP.length}
-          </span>
+            ${r.desarmesReais}
+          </span>${r.acionaveis>0?` <span title="${r.acionaveis} desarme(s) por causa acionável (poda/vegetação/objeto)" style="color:#2ecc71;font-weight:700">🌳${r.acionaveis}</span>`:''}
         </td>
         <td style="${td};text-align:center;color:var(--eq-gray)">${r.nd}</td>
+        <td style="${td};text-align:right;font-weight:700;color:${r.chiTotal>500?'var(--eq-error)':r.chiTotal>100?'var(--eq-warning)':'var(--eq-gray)'}" title="CHI acumulado na janela de 3 meses">${r.chiTotal.toFixed(1)}</td>
         <td style="${td};text-align:center;font-weight:700;color:${r.color}">${matrizLabel(r.nc,r.nd)}</td>
         <td style="${td};text-align:center"><span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;color:${r.color};background:${r.color.replace(')',',0.1)').replace('var(','rgba(').replace('--eq-error','255,77,109').replace('--eq-warning','255,179,0').replace('--eq-success','0,229,160')}">${r.lbl}</span></td>
         <td style="${td};text-align:center">${pendBadge}</td>
         <td style="${td};text-align:center;font-size:12px">${janelaBadge}</td>
       </tr>
       <tr id="deco-${r.nome.replace(/[^a-z0-9]/gi,'_')}" style="display:none;background:rgba(0,0,0,.2)">
-        <td colspan="10" style="padding:6px 12px">
+        <td colspan="11" style="padding:6px 12px">
           ${r.ocsSemPTP.length?`<table style="width:100%;font-size:11px;border-collapse:collapse">
             <tr style="color:var(--eq-gray)"><th style="text-align:left;padding:2px 5px">Nº</th><th style="text-align:left;padding:2px 5px">Data Início</th><th style="text-align:left;padding:2px 5px">Data Fim</th><th style="text-align:left;padding:2px 5px">Causa</th><th style="text-align:right;padding:2px 5px">CHI</th></tr>
             ${r.ocsSemPTP.map(o=>`<tr><td style="padding:2px 5px">${o.numero||'—'}</td><td style="padding:2px 5px;color:var(--eq-gray)">${o.inicio||'—'}</td><td style="padding:2px 5px;color:var(--eq-gray)">${o.fim||'—'}</td><td style="padding:2px 5px;color:var(--eq-cyan)">${o.causa||'—'}</td><td style="padding:2px 5px;text-align:right;font-weight:700">${parseFloat(o.chi||0).toFixed(2)}</td></tr>`).join('')}
@@ -1846,8 +1897,9 @@
             <th style="padding:6px 7px;text-align:left;color:var(--eq-gray);white-space:nowrap">Conjunto</th>
             <th onclick="ordenarMatrizGeral('clientes')" style="${thStyle};text-align:right">Clientes${thIcon('clientes')}</th>
             <th style="padding:6px 7px;text-align:center;color:var(--eq-gray);white-space:nowrap">N.Cli</th>
-            <th onclick="ordenarMatrizGeral('desarmes')" style="${thStyle};text-align:center">Desarmes${thIcon('desarmes')}</th>
+            <th onclick="ordenarMatrizGeral('desarmes')" style="${thStyle};text-align:center" title="Desarmes reais (sem PTP). 🌳 = quantos por causa acionável (poda)">Desarmes${thIcon('desarmes')}</th>
             <th style="padding:6px 7px;text-align:center;color:var(--eq-gray);white-space:nowrap">N.Des</th>
+            <th onclick="ordenarMatrizGeral('chi')" style="${thStyle};text-align:right" title="CHI acumulado na janela de 3 meses">CHI${thIcon('chi')}</th>
             <th onclick="ordenarMatrizGeral('matriz')" style="${thStyle};text-align:center">Matriz${thIcon('matriz')}</th>
             <th style="padding:6px 7px;text-align:center;color:var(--eq-gray);white-space:nowrap">Criticidade</th>
             <th onclick="ordenarMatrizGeral('pendencias')" style="${thStyle};text-align:center" title="Serviços pendentes (apenas equipamentos já inspecionados)">Pend.${thIcon('pendencias')}</th>
@@ -1871,12 +1923,14 @@
     const equips=Object.keys(decometroCache).filter(equipValido).sort();
     return equips.map(nome=>{
       const ocs3m=ocorrencias3m(nome)||[];
+      const ocsSemPTP=desarmesSemPTP(ocs3m);
       const circ=todosCircuitosCache.find(c=>c.nome===nome);
       const clientes=circ?parseInt(circ.clientes||0):(decoCltsMedia[nome]||0);
       const nc=nivelClientes(clientes);
       const nd=nivelDesarmes(ocs3m);
       const {color,lbl}=matrizCor(nc,nd);
-      return{nome,nc,nd,color,lbl};
+      const met=_metricasOcs(ocsSemPTP);
+      return{nome,nc,nd,color,lbl,chiTotal:met.chiTotal,acionaveis:met.acionaveis};
     });
   }
 
@@ -1885,14 +1939,17 @@
     if(!rows.length){showToast('Nenhum dado do Decômetro disponível.',true);return;}
 
     // agrupa por célula nc-nd
-    const cel={}; // 'nc-nd' → { count, nomes[] }
+    const cel={}; // 'nc-nd' → { count, nomes[], chi, acionaveis }
     rows.forEach(r=>{
       const k=r.nc+'-'+r.nd;
-      if(!cel[k])cel[k]={count:0,nomes:[]};
+      if(!cel[k])cel[k]={count:0,nomes:[],chi:0,acionaveis:0};
       cel[k].count++;
       cel[k].nomes.push(r.nome);
+      cel[k].chi+=r.chiTotal||0;
+      if(r.acionaveis>0)cel[k].acionaveis++;
     });
     const total=rows.length;
+    const totalAcion=rows.filter(r=>r.acionaveis>0).length;
 
     // resumo por criticidade (usa matrizCor.lbl)
     const resumo={'Crítico':0,'Mediano':0,'Baixo':0};
@@ -1918,16 +1975,18 @@
 
     const celHtml=(nc,nd)=>{
       const k=nc+'-'+nd;
-      const c=cel[k]||{count:0};
+      const c=cel[k]||{count:0,chi:0,acionaveis:0};
       const {bg,border,color,lbl}=matrizCor(nc,nd);
       const pct=total?Math.round(c.count/total*100):0;
       const clic=c.count>0;
+      const chiCel=Math.round(c.chi||0);
       return`<div ${clic?`onclick="verEquipsQuadrante('${k}')"`:''}
-        style="background:${bg};border:1.5px solid ${border};border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:92px;transition:transform .12s;cursor:${clic?'pointer':'default'};${clic?'':'opacity:.45'}"
+        style="background:${bg};border:1.5px solid ${border};border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:100px;transition:transform .12s;cursor:${clic?'pointer':'default'};${clic?'':'opacity:.45'}"
         ${clic?'onmouseover="this.style.transform=\'scale(1.03)\'" onmouseout="this.style.transform=\'scale(1)\'"':''}>
         <div style="font-size:30px;font-weight:800;color:${color};line-height:1;font-family:'Barlow Condensed',sans-serif">${c.count}</div>
         <div style="font-size:11px;color:${color};font-weight:700">${matrizLabel(nc,nd)} · ${lbl}</div>
-        <div style="font-size:10px;color:var(--eq-gray)">${pct}%</div>
+        <div style="font-size:10px;color:var(--eq-gray)">${pct}% · CHI ${chiCel}</div>
+        ${c.acionaveis>0?`<div style="font-size:10px;color:#2ecc71;font-weight:700" title="${c.acionaveis} equipamento(s) com causa acionável">🌳 ${c.acionaveis}</div>`:''}
       </div>`;
     };
 
@@ -1943,11 +2002,16 @@
       grade+=celHtml(nc,1)+celHtml(nc,2)+celHtml(nc,3);
     }
 
+    const totAcion=Object.values(cel).reduce((s,c)=>s+(c.acionaveis||0),0);
     return`
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
         ${chip('Crítico',resumo['Crítico']||0,cCrit)}
         ${chip('Mediano',resumo['Mediano']||0,cMed)}
         ${chip('Baixo',resumo['Baixo']||0,cBaixo)}
+        <div style="flex:1;min-width:110px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:8px;padding:8px 12px;text-align:center" title="Equipamentos com desarme por causa acionável (poda/vegetação/objeto)">
+          <div style="font-size:22px;font-weight:800;color:#2ecc71;font-family:'Barlow Condensed',sans-serif;line-height:1">🌳 ${totAcion}</div>
+          <div style="font-size:11px;color:#2ecc71;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Acionável</div>
+        </div>
         <div style="flex:1;min-width:110px;background:rgba(0,170,255,.08);border:1px solid rgba(0,170,255,.25);border-radius:8px;padding:8px 12px;text-align:center">
           <div style="font-size:22px;font-weight:800;color:var(--eq-cyan);font-family:'Barlow Condensed',sans-serif;line-height:1">${total}</div>
           <div style="font-size:11px;color:var(--eq-cyan);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total</div>
@@ -2143,16 +2207,20 @@
   let _matrizGeralFiltro='todas'; // faixa da matriz ativa (ex: '1 - 1')
   let _matrizGeralBusca='';       // texto de busca por equipamento/conjunto
   let _matrizGeralSoPendencia=false; // filtro independente: só inspecionados c/ pendência
+  let _matrizGeralSoAcionavel=false; // filtro independente: só com desarme por causa acionável
 
-  // aplica busca + filtro de faixa + filtro de pendência juntos e re-renderiza
+  // aplica busca + filtro de faixa + filtros independentes e re-renderiza
   function aplicarMatrizGeral(){
     const termo=_matrizGeralBusca.toLowerCase().trim();
     let rows=_matrizGeralFiltro==='todas'
       ? _matrizGeralRows
       : _matrizGeralRows.filter(r=>matrizLabel(r.nc,r.nd)===_matrizGeralFiltro);
-    // filtro de pendência é INDEPENDENTE do filtro de matriz — combina com ele
+    // filtros independentes do filtro de matriz — combinam com ele
     if(_matrizGeralSoPendencia){
       rows=rows.filter(r=>r.temInspecao&&r.pendencias>0);
+    }
+    if(_matrizGeralSoAcionavel){
+      rows=rows.filter(r=>r.acionaveis>0);
     }
     if(termo){
       rows=rows.filter(r=>
@@ -2162,6 +2230,17 @@
     }
     renderTabelaMatrizGeral(rows);
   }
+
+  window.toggleFiltroAcionavel=function(){
+    _matrizGeralSoAcionavel=!_matrizGeralSoAcionavel;
+    const b=document.getElementById('btnFiltroAcionavel');
+    if(b){
+      b.style.background=_matrizGeralSoAcionavel?'rgba(46,204,113,.2)':'rgba(46,204,113,.07)';
+      b.style.borderColor=_matrizGeralSoAcionavel?'#2ecc71':'rgba(46,204,113,.4)';
+      b.style.outline=_matrizGeralSoAcionavel?'2px solid rgba(46,204,113,.25)':'none';
+    }
+    aplicarMatrizGeral();
+  };
 
   window.toggleFiltroPendencia=function(){
     _matrizGeralSoPendencia=!_matrizGeralSoPendencia;
@@ -2179,6 +2258,9 @@
     const n=_matrizGeralRows.filter(r=>r.temInspecao&&r.pendencias>0).length;
     const el=document.getElementById('cntFiltroPendencia');
     if(el)el.textContent=`(${n})`;
+    const na=_matrizGeralRows.filter(r=>r.acionaveis>0).length;
+    const ela=document.getElementById('cntFiltroAcionavel');
+    if(ela)ela.textContent=`(${na})`;
   }
 
   window.buscarMatrizGeral=function(valor){
@@ -2228,7 +2310,8 @@
       const circIdExp=circ?circ.id:null;
       const temInspExp=circIdExp?!!inspecoesCache[circIdExp]:false;
       const pendExp=circIdExp?(anomaliasCache[circIdExp]||0):0;
-      return{'Equipamento':nome,'Conjunto':decoConjunto[nome]||'—','Clientes':clientes,'Fonte Clientes':circ?'Circuito':'Média xlsx','Desarmes (sem PTP)':ocsSemPTP.length,'Nível Clientes':nc,'Nível Desarmes':nd,'Matriz':matrizLabel(nc,nd),'Criticidade':lbl,'Inspecionado':temInspExp?'Sim':'Não','Serviços Pendentes':temInspExp?pendExp:'—','Janela 90d (dias)':diasRestExp===null?'—':diasRestExp,'Saída da Janela':saidaJanelaExp?saidaJanelaExp.toLocaleDateString('pt-BR'):'—'};
+      const metExp=_metricasOcs(ocsSemPTP);
+      return{'Equipamento':nome,'Conjunto':decoConjunto[nome]||'—','Clientes':clientes,'Fonte Clientes':circ?'Circuito':'Média xlsx','Desarmes (sem PTP)':ocsSemPTP.length,'CHI Acumulado':metExp.chiTotal,'Desarmes Acionáveis (poda)':metExp.acionaveis,'Nível Clientes':nc,'Nível Desarmes':nd,'Matriz':matrizLabel(nc,nd),'Criticidade':lbl,'Inspecionado':temInspExp?'Sim':'Não','Serviços Pendentes':temInspExp?pendExp:'—','Janela 90d (dias)':diasRestExp===null?'—':diasRestExp,'Saída da Janela':saidaJanelaExp?saidaJanelaExp.toLocaleDateString('pt-BR'):'—'};
     });
     const ws=window.XLSX.utils.json_to_sheet(rows);
     const wb=window.XLSX.utils.book_new();
